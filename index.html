@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>html,body{margin:0}body{font-family:system-ui,sans-serif;font-size:14px}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Hobbit x Piedmont Cube</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=IM+Fell+English:ital@0;1&family=Alegreya:ital,wght@0,400;0,600;0,700;1,400&family=Alegreya+Sans+SC:wght@500;700&display=swap">
+<style>
+/* Layout: a single bound ledger column; standings first, then each draft as a chapter, then the card verdicts. */
+:root {
+  --bg: #efe6d0;          /* parchment */
+  --page: #f7f0dd;        /* lighter leaf */
+  --ink: #2b2418;
+  --ink-soft: #6b5d45;
+  --rule: #cdbd98;
+  --red: #8e2a1f;         /* Red Book binding */
+  --green: #2f5a3a;       /* round green door */
+  --gold: #a67c1e;        /* the Ring */
+  --win: #2f5a3a;
+  --loss: #8e2a1f;
+  --mana-w: #f4ecd2; --mana-u: #2a6ca8; --mana-b: #3b3433; --mana-r: #c2442b; --mana-g: #3f7d47; --mana-m: #c9a43a;
+  --pip-edge: rgba(43,36,24,.35);
+  --display: "IM Fell English SC", "Iowan Old Style", Georgia, serif;
+  --fell: "IM Fell English", "Iowan Old Style", Georgia, serif;
+  --body: "Alegreya", "Iowan Old Style", Georgia, serif;
+  --label: "Alegreya Sans SC", "Gill Sans", "Trebuchet MS", sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #17140f; --page: #201b14; --ink: #ece2c8; --ink-soft: #b3a582; --rule: #4a3f2c;
+  --red: #d06a55; --green: #7fb08a; --gold: #d9b14f; --win: #8cc097; --loss: #e07b66;
+  --pip-edge: rgba(236,226,200,.35); color-scheme: dark;
+}}
+:root[data-theme="dark"] {
+  --bg: #17140f; --page: #201b14; --ink: #ece2c8; --ink-soft: #b3a582; --rule: #4a3f2c;
+  --red: #d06a55; --green: #7fb08a; --gold: #d9b14f; --win: #8cc097; --loss: #e07b66;
+  --pip-edge: rgba(236,226,200,.35); color-scheme: dark;
+}
+* { box-sizing: border-box; }
+:root { --map-ink: rgba(107, 93, 69, .24); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --map-ink: rgba(179, 165, 130, .15); } }
+:root[data-theme="dark"] { --map-ink: rgba(179, 165, 130, .15); }
+.mapbg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.book { position: relative; z-index: 1; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--body); font-size: 17px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 64px;
+}
+.book { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 48px; }
+
+.crest-row { display: flex; align-items: center; justify-content: center; gap: clamp(12px, 4vw, 28px); margin-bottom: 10px; }
+.crest-row svg.art { width: clamp(96px, 24vw, 136px); height: auto; max-width: 100%; display: block; }
+.crest-row .x { font-family: var(--display); font-size: clamp(28px, 6vw, 40px); color: var(--gold); line-height: 1; }
+header.title { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 8px; }
+.eyebrow { font-family: var(--label); font-size: 13px; letter-spacing: .14em; color: var(--ink-soft); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(38px, 7vw, 64px); line-height: 1; margin: 0; color: var(--red); text-wrap: balance; }
+.subtitle { font-family: var(--fell); font-style: italic; font-size: 19px; color: var(--ink-soft); margin: 0; max-width: 34ch; text-wrap: balance; }
+.flourish { width: 100%; max-width: 360px; height: 18px; color: var(--gold); }
+
+h2 { font-family: var(--display); font-weight: 400; font-size: 30px; margin: 0; color: var(--ink); text-wrap: balance; }
+.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; border-bottom: 1px solid var(--rule); padding-bottom: 8px; margin-bottom: 16px; }
+.section-head .note { font-family: var(--fell); font-style: italic; color: var(--ink-soft); font-size: 16px; }
+
+/* Standings */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; }
+th { font-family: var(--label); font-weight: 700; font-size: 13px; letter-spacing: .1em; color: var(--ink-soft); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+td { padding: 12px 10px; border-bottom: 1px dotted var(--rule); vertical-align: middle; }
+th.num, td.num { text-align: right; }
+td.rank { font-family: var(--display); font-size: 22px; color: var(--gold); width: 1%; }
+td.player { font-weight: 700; font-size: 19px; }
+td.player small { display: block; font-weight: 400; font-size: 14px; color: var(--ink-soft); font-style: italic; }
+.rec { font-weight: 700; white-space: nowrap; }
+.rec .w { color: var(--win); } .rec .l { color: var(--loss); }
+.pct { color: var(--ink-soft); }
+
+/* Mana pips */
+.pips { display: inline-flex; align-items: center; gap: 3px; vertical-align: -3px; }
+.pip.sm { width: 10px; height: 10px; }
+.splash-mark { font-family: var(--label); font-size: 12px; line-height: 1; color: var(--ink-soft); margin: 0 1px; }
+.pip { width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--pip-edge); display: inline-block; }
+.pip.W { background: var(--mana-w); } .pip.U { background: var(--mana-u); } .pip.B { background: var(--mana-b); }
+.pip.R { background: var(--mana-r); } .pip.G { background: var(--mana-g); }
+.pip.M { background: conic-gradient(var(--mana-w) 0 20%, var(--mana-u) 0 40%, var(--mana-b) 0 60%, var(--mana-r) 0 80%, var(--mana-g) 0); }
+
+/* Drafts */
+.chapter { background: var(--page); border: 1px solid var(--rule); border-radius: 3px; padding: 20px clamp(16px, 4vw, 28px) 24px; display: flex; flex-direction: column; gap: 18px; }
+.chapter-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.chapter-head h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; color: var(--red); }
+.chapter-head .meta { font-family: var(--label); font-size: 13px; letter-spacing: .1em; color: var(--ink-soft); display: flex; gap: 10px; align-items: center; }
+.chip { font-family: var(--label); font-size: 12px; letter-spacing: .1em; padding: 2px 9px; border-radius: 999px; border: 1px solid currentColor; }
+.chip.live { color: var(--gold); }
+.chip.done { color: var(--green); }
+.decks { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.deck { border-top: 2px solid var(--rule); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.deck .who { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.deck .name { font-weight: 700; font-size: 19px; }
+.deck .arch { font-family: var(--fell); font-size: 17px; }
+.deck .colors { font-size: 14px; color: var(--ink-soft); }
+.deck.champion { border-top-color: var(--gold); }
+.matches { display: flex; flex-direction: column; gap: 4px; }
+.matches h4, .card-row h4 { font-family: var(--label); font-weight: 700; font-size: 13px; letter-spacing: .1em; color: var(--ink-soft); margin: 0 0 4px; }
+.match { font-family: var(--fell); font-size: 17px; }
+.match b { font-family: var(--body); }
+.match .score { font-family: var(--body); color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+
+/* Card verdicts */
+.verdicts { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+@media (max-width: 640px) { .verdicts { grid-template-columns: 1fr; } }
+.verdict h3 { font-family: var(--display); font-weight: 400; font-size: 24px; margin: 0 0 12px; }
+.verdict.best h3 { color: var(--gold); }
+.verdict.worst h3 { color: var(--red); }
+.verdict p.lede { font-family: var(--fell); font-style: italic; color: var(--ink-soft); margin: 2px 0 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+.card { margin: 0; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card img { width: 100%; max-width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 4.75% / 3.5%; box-shadow: 0 2px 8px rgba(0,0,0,.25); display: block; }
+.card figcaption { font-size: 14px; line-height: 1.35; }
+.card figcaption b { display: block; font-size: 15px; }
+.card figcaption span { color: var(--ink-soft); font-style: italic; }
+.thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+.thumb { width: 76px; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 4px; }
+.thumb img { width: 100%; max-width: 100%; aspect-ratio: 488 / 680; object-fit: cover; border-radius: 4.75% / 3.5%; box-shadow: 0 1px 4px rgba(0,0,0,.3); display: block; transition: transform .15s ease; }
+.thumb:hover img, .thumb:focus-visible img { transform: translateY(-3px); }
+.thumb:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.preview { position: fixed; z-index: 50; width: min(290px, 72vw); pointer-events: none; display: flex; flex-direction: column; gap: 6px; }
+.preview img { width: 100%; aspect-ratio: 488 / 680; border-radius: 4.75% / 3.5%; box-shadow: 0 12px 32px rgba(0,0,0,.45); display: block; }
+.preview .cap { background: var(--page); border: 1px solid var(--rule); border-radius: 3px; padding: 6px 10px; font-size: 14px; font-style: italic; color: var(--ink-soft); }
+@media (prefers-reduced-motion: reduce) { .thumb img { transition: none; } }
+.pip.C { background: #b7b0a2; }
+.cube-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.search { font: inherit; font-size: 15px; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--rule); background: var(--page); color: var(--ink); width: 220px; max-width: 100%; min-width: 0; }
+.color-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.cchip { font-family: var(--label); font-size: 14px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--rule); background: var(--page); color: var(--ink); cursor: pointer; display: inline-flex; align-items: center; min-height: 28px; }
+.cchip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.cchip .pip { width: 13px; height: 13px; }
+.search:focus-visible, .cchip:focus-visible, .tbtn:focus-visible, .rm:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.hint { font-family: var(--fell); font-style: italic; color: var(--ink-soft); margin: -4px 0 12px; font-size: 15px; }
+.cube-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 10px; }
+.ccard { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.ccard .thumb { width: 100%; }
+.ccard.is-top .thumb img { box-shadow: 0 0 0 2px var(--gold), 0 1px 4px rgba(0,0,0,.3); }
+.ccard.is-bottom .thumb img { box-shadow: 0 0 0 2px var(--red), 0 1px 4px rgba(0,0,0,.3); }
+.tbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tbtn { font-family: var(--label); font-size: 12px; letter-spacing: .04em; padding: 3px 0; border-radius: 3px; border: 1px solid var(--rule); background: var(--page); color: var(--ink-soft); cursor: pointer; }
+.tbtn.top[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); font-weight: 700; }
+.tbtn.bot[aria-pressed="true"] { border-color: var(--red); color: var(--red); font-weight: 700; }
+.tier-item { position: relative; }
+.rm { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--rule); background: var(--page); color: var(--ink-soft); font-size: 14px; line-height: 1; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.empty { border: 1px dashed var(--rule); border-radius: 3px; padding: 20px 16px; text-align: center; font-family: var(--fell); font-style: italic; color: var(--ink-soft); }
+
+footer { text-align: center; font-family: var(--fell); font-style: italic; color: var(--ink-soft); font-size: 15px; }
+</style>
+
+<div class="book">
+  <header class="title">
+    <div class="crest-row">
+      <svg class="art" viewBox="0 0 140 140" role="img" aria-label="A round green hobbit-hole door set into a grassy hill">
+        <defs><clipPath id="disc"><circle cx="70" cy="70" r="68"/></clipPath></defs>
+        <g clip-path="url(#disc)">
+          <rect width="140" height="140" fill="#cfe0e6"/>
+          <circle cx="112" cy="30" r="10" fill="#f1d77a"/>
+          <path d="M-10 74 Q70 18 150 74 V150 H-10 Z" fill="#6f9a4c"/>
+          <path d="M-10 92 Q70 50 150 92 V150 H-10 Z" fill="#5c8740"/>
+          <circle cx="70" cy="98" r="36" fill="#a8936a"/>
+          <circle cx="70" cy="98" r="30" fill="#2f5a3a"/>
+          <g stroke="#264a30" stroke-width="1.5"><line x1="52" y1="74" x2="52" y2="124"/><line x1="64" y1="68" x2="64" y2="128"/><line x1="76" y1="68" x2="76" y2="128"/><line x1="88" y1="74" x2="88" y2="124"/></g>
+          <circle cx="70" cy="98" r="4" fill="#e2b84a"/>
+          <circle cx="28" cy="86" r="9" fill="#a8936a"/><circle cx="28" cy="86" r="6" fill="#f3e2a8"/>
+          <path d="M6 128 q4 -10 8 0 q4 -12 8 0 M112 126 q4 -10 8 0 q4 -12 8 0" stroke="#3f6a2c" stroke-width="2" fill="none"/>
+          <rect x="20" y="128" width="100" height="14" fill="#b8a37b"/>
+        </g>
+        <circle cx="70" cy="70" r="68" fill="none" stroke="#a67c1e" stroke-width="3"/>
+      </svg>
+      <span class="x" aria-hidden="true">×</span>
+      <svg class="art" viewBox="0 0 140 140" role="img" aria-label="A Piedmont Middle School pennant-style crest">
+        <path d="M70 6 L128 22 V70 C128 104 102 124 70 134 C38 124 12 104 12 70 V22 Z" fill="#1f3a5f" stroke="#a67c1e" stroke-width="3"/>
+        <path d="M70 16 L119 29 V70 C119 98 97 115 70 124 C43 115 21 98 21 70 V29 Z" fill="none" stroke="#e2c46c" stroke-width="1.2"/>
+        <text x="70" y="44" text-anchor="middle" font-family="Alegreya Sans SC, Gill Sans, sans-serif" font-weight="700" font-size="11" letter-spacing="1.5" fill="#e2c46c">PIEDMONT</text>
+        <text x="70" y="86" text-anchor="middle" font-family="IM Fell English SC, Georgia, serif" font-size="40" fill="#f7f0dd">PMS</text>
+        <text x="70" y="104" text-anchor="middle" font-family="Alegreya Sans SC, Gill Sans, sans-serif" font-weight="500" font-size="9" letter-spacing="1.2" fill="#e2c46c">MIDDLE SCHOOL</text>
+        <path d="M46 112 h48" stroke="#e2c46c" stroke-width="1"/>
+      </svg>
+    </div>
+    <h1>Hobbit × Piedmont Cube</h1>
+    <svg class="flourish" viewBox="0 0 360 18" aria-hidden="true"><path d="M0 9 H150 M210 9 H360" stroke="currentColor" stroke-width="1" fill="none"/><circle cx="180" cy="9" r="7" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="160" cy="9" r="2" fill="currentColor"/><circle cx="200" cy="9" r="2" fill="currentColor"/></svg>
+  </header>
+
+  <section>
+    <div class="section-head"><h2>Decks</h2><span class="note" id="standings-note"></span></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>Deck</th><th>Pilot</th><th class="num">Draft</th><th class="num">Record</th><th class="num">Win %</th></tr></thead>
+        <tbody id="standings"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>Power Rankings</h2><span class="note">A running list of best and worst cards in the cube</span></div>
+    <div class="verdicts">
+      <div class="verdict best"><h3>Best</h3><div id="best"></div></div>
+      <div class="verdict worst"><h3>Worst</h3><div id="worst"></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><h2>The Cube</h2><span class="note" id="cube-note"></span></div>
+    <div class="cube-tools" id="cube-tools">
+      <input class="search" id="cube-search" type="search" placeholder="Search by name" aria-label="Search the cube by name">
+      <div class="color-chips" id="color-chips">
+        <button class="cchip" type="button" data-color="" aria-pressed="true">All</button>
+        <button class="cchip" type="button" data-color="W" aria-pressed="false" aria-label="White"><span class="pip W"></span></button>
+        <button class="cchip" type="button" data-color="U" aria-pressed="false" aria-label="Blue"><span class="pip U"></span></button>
+        <button class="cchip" type="button" data-color="B" aria-pressed="false" aria-label="Black"><span class="pip B"></span></button>
+        <button class="cchip" type="button" data-color="R" aria-pressed="false" aria-label="Red"><span class="pip R"></span></button>
+        <button class="cchip" type="button" data-color="G" aria-pressed="false" aria-label="Green"><span class="pip G"></span></button>
+        <button class="cchip" type="button" data-color="M" aria-pressed="false" aria-label="Multicolor"><span class="pip M"></span></button>
+        <button class="cchip" type="button" data-color="C" aria-pressed="false" aria-label="Colorless and lands"><span class="pip C"></span></button>
+      </div>
+    </div>
+    <p class="hint" id="cube-hint" hidden>Use Top and Bottom under a card to move it into Best or Worst.</p>
+    <div class="cube-grid" id="cube-grid"></div>
+    <div class="empty" id="cube-empty" hidden>No cards match.</div>
+  </section>
+
+</div>
+
+<script id="ledger" type="application/json">
+{
+  "drafts": [
+    {
+      "id": 1,
+      "date": "2026-10-14",
+      "status": "live",
+      "decks": [
+        { "player": "Jack", "colors": ["U","R"], "archetype": "Dwarf Control", "colorName": "Blue-Red" },
+        { "player": "Tim",  "colors": ["R"], "splash": ["W","U","B"], "archetype": "Goblins & Artifacts", "colorName": "Red, splashing White, Blue & Black" },
+        { "player": "Furf", "colors": ["G"], "splash": ["W","U"], "archetype": "Big Bear", "colorName": "Green, splashing White & Blue" },
+        { "player": "Eric", "colors": ["W","B"], "archetype": "Fliers & Sacrifice", "colorName": "White-Black" }
+      ],
+      "matches": [
+        { "winner": "Jack", "loser": "Tim" },
+        { "winner": "Furf", "loser": "Tim" }
+      ],
+      "champion": null,
+      "keyCards": []
+    }
+  ],
+  "best": ["hob-126"],
+  "worst": []
+}
+</script>
+<script id="cube" type="application/json">[{"id": "hob-1", "name": "Long-Bodied Grey Dog", "ci": [], "img": "https://cards.scryfall.io/normal/front/d/1/d1a1e520-1fe2-4529-8afb-c187bb80da3c.jpg"}, {"id": "hob-3", "name": "Troop of Ponies", "ci": [], "img": "https://cards.scryfall.io/normal/front/0/b/0b4b1c59-bcec-4779-9e27-0e6f9feb4e11.jpg"}, {"id": "hob-6", "name": "Bofur, Reliable Guardian // Concerted Care", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/6/b/6b8e6435-7de4-41d5-bc7d-8e24c11897d0.jpg"}, {"id": "hob-10", "name": "Dwarven Shortsword", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/f/2/f2341cf3-4d2c-4a4f-9aea-8834104a8910.jpg"}, {"id": "hob-11", "name": "Eagle of the Great Shelf", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/3/f/3feca644-5f65-4477-bbc8-d505cec6f3a5.jpg"}, {"id": "hob-13", "name": "Esgaroth Garrison", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/5/7/573f67b0-6ce8-4857-a703-4a5728640736.jpg"}, {"id": "hob-16", "name": "Iron Hills Blacksmith", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/3/7/370e09c2-36c5-4662-8350-1db798afad3e.jpg"}, {"id": "hob-18", "name": "Lake-town Lookout", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/1/7/178c4cf6-6b11-40e4-9673-c560d6818a6b.jpg"}, {"id": "hob-22", "name": "The Mountain-king's Return", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/6/8/68f4893d-e9a5-4f89-ade3-9ab78a834ad5.jpg"}, {"id": "hob-23", "name": "Ori, Keeper of Songs", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/c/5/c5727af5-a487-4b16-8278-81c3c928c417.jpg"}, {"id": "hob-26", "name": "Settle the Wreckage", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/3/1/31a7a5e2-4cb8-48fc-8351-18344b4a7560.jpg"}, {"id": "hob-30", "name": "Velvetwing Butterflies // Gaze in Wonder", "ci": ["W"], "img": "https://cards.scryfall.io/normal/front/5/c/5cc0f994-5048-4898-926e-b56cbc97e0ca.jpg"}, {"id": "hob-32", "name": "Bilbo, Luckwearer // Burglar's Plot", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/8/b/8bff0aa6-16d9-4c83-b598-ef00a3b33d2c.jpg"}, {"id": "hob-33", "name": "Bilbo, Thief in the Night", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/4/8/484c7f83-8339-4ae1-8350-68ce1f7d05a3.jpg"}, {"id": "hob-35", "name": "Confusticate and Bebother", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/9/d/9de48690-e5ae-495a-addf-305f1db7ec21.jpg"}, {"id": "hob-39", "name": "Enchanted River's Grasp", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/d/ad40a4b9-9fab-49c1-8e9f-6e0776966833.jpg"}, {"id": "hob-41", "name": "Gandalf, Wandering Wizard", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/1/f/1f8403a2-849c-4a59-b0ed-c8803995028d.jpg"}, {"id": "hob-42", "name": "Great Gilded Boat", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/b/2/b2fb3995-5b43-4776-88b2-346d353edee0.jpg"}, {"id": "hob-43", "name": "Lakeshore Apothecary", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/b/abfbb255-a39b-4df5-bfb6-5298584e89f0.jpg"}, {"id": "hob-47", "name": "Master's Councillors", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/d/addcefdd-e012-4adf-9052-e60376a8d2d3.jpg"}, {"id": "hob-48", "name": "Mirkwood Meditator", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/d/ad7ed4e6-3fe2-40f1-909b-a03b2a3c941a.jpg"}, {"id": "hob-50", "name": "Old Fat Spider Can't See Me", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/4/a/4a865cea-f947-4736-8ace-ba478fceeb22.jpg"}, {"id": "hob-51", "name": "Plunder the Trollshaws", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/f/afb73190-b9bd-4744-a011-a37cd9c0148d.jpg"}, {"id": "hob-53", "name": "Riddles in the Dark", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/a/6/a6129286-7437-4ba4-be55-586a22cd67ca.jpg"}, {"id": "hob-55", "name": "Sound the Trumpets", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/d/d/dd32a1dd-3541-4572-a717-1deabc14b827.jpg"}, {"id": "hob-56", "name": "Thranduil's Decree", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/e/4/e4ded4c1-0e3e-47c5-8fdc-e7c187f68b12.jpg"}, {"id": "hob-58", "name": "Uneasy Partings", "ci": ["U"], "img": "https://cards.scryfall.io/normal/front/e/4/e49866d4-966a-40f9-b08d-18e5af6d726b.jpg"}, {"id": "hob-63", "name": "Crude Bent Blade", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/f/a/fa8fd3c4-bd00-485d-80b1-2b67f5786fce.jpg"}, {"id": "hob-64", "name": "Desolation Prowler", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/6/3/63c87009-ff1b-44b9-88b1-e26219094c67.jpg"}, {"id": "hob-67", "name": "Front Porch Sentries", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/0/7/07bfc803-e11b-47ab-9f25-0ace7e174200.jpg"}, {"id": "hob-69", "name": "Gnashing of Teeth", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/5/d/5d485d70-c7b9-40a4-9089-5e7f1c2b9213.jpg"}, {"id": "hob-71", "name": "Gollum, Silent Slinker // Meager Meal", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/6/c/6cfaa182-3fec-4907-8814-b4d29c33cec3.jpg"}, {"id": "hob-73", "name": "Great Fierce Bee", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/9/d/9d9ef88f-d208-4788-9553-cd672b3be1fe.jpg"}, {"id": "hob-83", "name": "The Sackville-Bagginses", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/e/d/ed87b471-79f9-45ec-9188-69e970f6121e.jpg"}, {"id": "hob-87", "name": "Balin, Loremaster", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/4/2/42d7ca7b-c983-40fd-ad57-59f6972bb375.jpg"}, {"id": "hob-88", "name": "Bombur, Gentle Dreamer", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/6/3/63c317e7-432c-4817-8db4-3670a1d84be3.jpg"}, {"id": "hob-90", "name": "Burn, Burn, Tree and Fern", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/f/c/fceb1a2d-121e-49ad-acf2-1bb5aebec116.jpg"}, {"id": "hob-91", "name": "Dáin Ironfoot", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/7/1/7112e460-9160-4535-ad94-93f1f4ac04cf.jpg"}, {"id": "hob-92", "name": "Desert Were-Worm", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/f/c/fc12c22a-11ff-4fb0-bc42-dd8490b8efb7.jpg"}, {"id": "hob-95", "name": "Dwarven Mauler", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/b/d/bd0f0415-43af-4f5d-8999-853c5d42780d.jpg"}, {"id": "hob-98", "name": "Getaway Barrel", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/e/4/e4819aa6-5d28-4a37-942d-89523e30c4e1.jpg"}, {"id": "hob-101", "name": "Gundabad Opportunist", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/b/c/bc4a60b8-a5bb-4dbf-8d48-95caf757eac3.jpg"}, {"id": "hob-104", "name": "The Misty Mountains Cold", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/3/d/3d5f35ff-4146-4844-9da5-031461cc8c05.jpg"}, {"id": "hob-112", "name": "Snowslope Hunter", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/4/7/47666099-ffb2-4d07-a801-70524dba0837.jpg"}, {"id": "hob-114", "name": "Thorin, Mountain-king", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/1/1/117347af-0dd7-4350-901d-8c8a81387e22.jpg"}, {"id": "hob-116", "name": "Attercop", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/8/1/81263d5d-e402-4813-9458-161112da27ab.jpg"}, {"id": "hob-120", "name": "Beorn's Hospitality", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/1/5/153ca57e-30f0-4ad7-ae9d-c55cbf0fd4c9.jpg"}, {"id": "hob-121", "name": "Boughside Wanderers", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/7/1/71bec005-2925-4944-be16-2cc5eb30f5d6.jpg"}, {"id": "hob-122", "name": "Cantankerous Keepers", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/f/a/fae46a70-a6d3-4584-859d-6c7425fb1508.jpg"}, {"id": "hob-123", "name": "Dancing from Dark to Dawn", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/5/5/550cd0b6-ca61-4db7-9d20-0b68c48066f9.jpg"}, {"id": "hob-126", "name": "Gigantic Big Bear", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/7/d/7d6ece3d-8e7a-41ad-974f-3c9748de4825.jpg"}, {"id": "hob-127", "name": "Guardian of the Halls", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/4/2/4265caec-8c28-44cd-8e6b-90b5af926d3c.jpg"}, {"id": "hob-128", "name": "Little Bear", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/8/a/8a50858a-33b5-4c45-9c31-5956ae5a33a6.jpg"}, {"id": "hob-130", "name": "Nasty Little Rabbit", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/9/6/96bc7d25-2828-478a-8fe5-a1f4ede8c9c0.jpg"}, {"id": "hob-132", "name": "Old Fat Spider", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/e/0/e0c0f842-40fe-4776-a988-a35216bcfd47.jpg"}, {"id": "hob-133", "name": "Ordinary Bear", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/0/f/0feb9817-56e1-465a-851c-b2fe202aa8ae.jpg"}, {"id": "hob-135", "name": "Quarrel", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/5/9/5900a0b4-aa89-4019-94c9-7e9ea3b4792e.jpg"}, {"id": "hob-137", "name": "Through the Forest Gate", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/8/8/880adfc8-69cf-4062-a804-e65b6cb6056d.jpg"}, {"id": "hob-138", "name": "Troll Negotiations", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/c/a/ca0f7bf4-b8a2-4ec4-ad7e-b639de9fa76a.jpg"}, {"id": "hob-139", "name": "Warg Tactics", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/b/0/b06d9cee-bb0f-4fe7-ab2a-b55d36461aec.jpg"}, {"id": "hob-140", "name": "Wargling", "ci": ["G"], "img": "https://cards.scryfall.io/normal/front/1/c/1ccbf823-846f-4f09-9c67-1deebb5d1d92.jpg"}, {"id": "hob-144", "name": "Bard, King of Dale", "ci": ["U", "W"], "img": "https://cards.scryfall.io/normal/front/c/0/c05c2aa6-29c7-40f8-872e-91099b9225c4.jpg"}, {"id": "hob-147", "name": "Bifur, Melodic Rider", "ci": ["R", "W"], "img": "https://cards.scryfall.io/normal/front/e/e/ee88cc80-8fbf-451c-b2b8-09158426c26a.jpg"}, {"id": "hob-148", "name": "Bolg of the North", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/7/b/7b2d2a7f-88e0-45a9-8579-a6736bcd66eb.jpg"}, {"id": "hob-150", "name": "The Chief Warg", "ci": ["B", "G"], "img": "https://cards.scryfall.io/normal/front/c/3/c397a298-bf7f-49d7-a26a-206ccf9e8120.jpg"}, {"id": "hob-153", "name": "Duskwatch Hunter", "ci": ["B", "G"], "img": "https://cards.scryfall.io/normal/front/3/6/3685c783-d837-4466-a960-ab3098db64c3.jpg"}, {"id": "hob-154", "name": "Dwalin, Weaponmaster", "ci": ["R", "W"], "img": "https://cards.scryfall.io/normal/front/1/9/196d9287-a37d-4b27-a83b-a5489a54f081.jpg"}, {"id": "hob-156", "name": "Fearsome Goblin Pair", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/2/e/2efe2dc7-3eaa-47f6-b1ae-f974c4a8ae79.jpg"}, {"id": "hob-157", "name": "Goblin Plate Mail", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/c/b/cb982607-da37-4894-91a5-cf6307d4d703.jpg"}, {"id": "hob-158", "name": "The Great Goblin", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/7/8/78d8f53e-537d-4eaa-99e3-cac57fa53d22.jpg"}, {"id": "hob-159", "name": "Large Bear", "ci": ["B", "G"], "img": "https://cards.scryfall.io/normal/front/5/0/50202288-f433-4b56-8f60-349bda7b4f6b.jpg"}, {"id": "hob-160", "name": "Mirkwood Nurturer", "ci": ["G", "U"], "img": "https://cards.scryfall.io/normal/front/7/0/704b45e4-566e-40f6-a33a-9151018b44e5.jpg"}, {"id": "hob-161", "name": "Nori, Teller of Tales", "ci": ["R", "W"], "img": "https://cards.scryfall.io/normal/front/b/0/b05adb48-980c-49a0-9ce6-7c7f3f20715d.jpg"}, {"id": "hob-162", "name": "Patient Instructor", "ci": ["U", "W"], "img": "https://cards.scryfall.io/normal/front/e/4/e4800508-8bb9-41bb-8712-b55fba7a80a5.jpg"}, {"id": "hob-164", "name": "Smaug, Wicked Worm", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/1/9/19cc91f0-e724-41ac-b6d8-9a293bd63b42.jpg"}, {"id": "hob-169", "name": "Tom, Bert, and William", "ci": ["B", "G"], "img": "https://cards.scryfall.io/normal/front/2/1/211a9764-3c60-46ba-bb53-e6692640ec8f.jpg"}, {"id": "hob-172", "name": "Dwarven Mattock", "ci": [], "img": "https://cards.scryfall.io/normal/front/9/2/92c6f09d-b525-4e8c-a87c-a74df9dc3b1e.jpg"}, {"id": "hob-173", "name": "Giant's Boulder", "ci": [], "img": "https://cards.scryfall.io/normal/front/c/e/ce254758-c928-4b43-a952-13fac1845668.jpg"}, {"id": "hob-176", "name": "My Precious // Allure of Power", "ci": ["B"], "img": "https://cards.scryfall.io/normal/front/1/5/15ae4d50-be2f-412c-bb6b-b0a06b60474a.jpg"}, {"id": "hob-177", "name": "Orcrist, Goblin-cleaver", "ci": [], "img": "https://cards.scryfall.io/normal/front/f/5/f54f1c1d-6a22-43e9-a842-0a1ae25b323c.jpg"}, {"id": "hob-178", "name": "Sting, Bilbo's Sword", "ci": [], "img": "https://cards.scryfall.io/normal/front/d/6/d6a8d698-c454-42c4-ad4e-9a7625d5569f.jpg"}, {"id": "hob-179", "name": "Thrór's Map", "ci": [], "img": "https://cards.scryfall.io/normal/front/a/d/ad0dba36-d056-4bc1-987a-391da26ad267.jpg"}, {"id": "hob-180", "name": "Well-Worn Spatula", "ci": [], "img": "https://cards.scryfall.io/normal/front/6/5/659b687f-4068-496f-81b2-7b606bf07ec1.jpg"}, {"id": "hob-181", "name": "Elven Passage", "ci": [], "img": "https://cards.scryfall.io/normal/front/d/d/dd1fd2ab-2565-4798-a832-fc849df82f74.jpg"}, {"id": "hob-182", "name": "Elvenking's Halls", "ci": ["G", "U"], "img": "https://cards.scryfall.io/normal/front/c/d/cd477096-41b1-4907-9cb3-852cb22c9ba2.jpg"}, {"id": "hob-183", "name": "Goblin-town", "ci": ["B", "R"], "img": "https://cards.scryfall.io/normal/front/d/7/d76df9d0-56cf-4351-a5e8-e6ae6fc791d1.jpg"}, {"id": "hob-184", "name": "Hobbit Hole", "ci": [], "img": "https://cards.scryfall.io/normal/front/0/3/0365c439-30bf-4d32-a791-166751bdb996.jpg"}, {"id": "hob-185", "name": "Iron Hills", "ci": ["R", "W"], "img": "https://cards.scryfall.io/normal/front/7/8/78045c43-5cbe-48ff-837d-e7c6baac2937.jpg"}, {"id": "hob-186", "name": "Lake-town", "ci": ["U", "W"], "img": "https://cards.scryfall.io/normal/front/2/f/2fbd0584-81a7-4c47-8af1-1c8635899a97.jpg"}, {"id": "hob-187", "name": "The Lonely Mountain", "ci": ["R"], "img": "https://cards.scryfall.io/normal/front/b/3/b39ebc4d-a01a-4401-ab3a-bf6142c93b47.jpg"}, {"id": "hob-188", "name": "Mirkwood", "ci": ["B", "G"], "img": "https://cards.scryfall.io/normal/front/6/1/612cf954-f86c-4629-99df-4874d56fded3.jpg"}]</script>
+
+<script>
+(function () {
+  const data = JSON.parse(document.getElementById("ledger").textContent);
+  const ROMAN = ["","I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI","XVII","XVIII","XIX","XX"];
+  const roman = n => ROMAN[n] || String(n);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const fmtDate = iso => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const COLOR = {W:"White",U:"Blue",B:"Black",R:"Red",G:"Green",M:"Multicolor"};
+  const pips = (colors, splash = []) => {
+    const s = el("span", "pips");
+    colors.forEach(c => { s.append(el("span", "pip " + c)); });
+    if (splash.length) {
+      s.append(el("span", "splash-mark", "+"));
+      splash.forEach(c => { s.append(el("span", "pip sm " + c)); });
+    }
+    return s;
+  };
+  const record = (w, l) => { const s = el("span", "rec"); s.append(el("span", "w", w), "–", el("span", "l", l)); return s; };
+
+  function recordIn(draft, player) {
+    let w = 0, l = 0;
+    draft.matches.forEach(m => { if (m.winner === player) w++; if (m.loser === player) l++; });
+    return [w, l];
+  }
+
+  // Standings: one row per deck, across every draft
+  const rows = [];
+  data.drafts.forEach(d => d.decks.forEach(dk => {
+    const [w, l] = recordIn(d, dk.player);
+    rows.push({ d, dk, w, l, champ: d.champion === dk.player });
+  }));
+  const pct = r => (r.w + r.l) ? r.w / (r.w + r.l) : -1;
+  rows.sort((a, b) => (pct(b) - pct(a)) || (b.w - a.w) || (a.l - b.l) || (b.champ - a.champ) || a.dk.archetype.localeCompare(b.dk.archetype));
+  const tbody = document.getElementById("standings");
+  let rank = 0, prevKey = null;
+  rows.forEach((r, i) => {
+    const key = pct(r) + "/" + r.w + "/" + r.l;
+    if (key !== prevKey) rank = i + 1; prevKey = key;
+    const tr = el("tr");
+    tr.append(el("td", "rank", roman(rank)));
+    const deck = el("td", "player", r.dk.archetype + (r.champ ? " ♛" : ""));
+    const sub = el("small"); const pp = pips(r.dk.colors, r.dk.splash); pp.title = r.dk.colorName; pp.setAttribute("role", "img"); pp.setAttribute("aria-label", r.dk.colorName); sub.append(pp); deck.append(sub);
+    tr.append(deck);
+    tr.append(el("td", null, r.dk.player));
+    tr.append(el("td", "num", roman(r.d.id)));
+    const rec = el("td", "num"); rec.append(record(r.w, r.l)); tr.append(rec);
+    tr.append(el("td", "num pct", (r.w + r.l) ? Math.round(100 * pct(r)) + "%" : "—"));
+    tbody.append(tr);
+  });
+  const totalMatches = data.drafts.reduce((n, d) => n + d.matches.length, 0);
+  document.getElementById("standings-note").textContent =
+    `${data.drafts.length} draft${data.drafts.length === 1 ? "" : "s"} · ${totalMatches} match${totalMatches === 1 ? "" : "es"} played`;
+
+  // Drafts
+  const draftsEl = document.getElementById("drafts");
+  if (draftsEl) [...data.drafts].sort((a, b) => b.id - a.id).forEach(d => {
+    const ch = el("article", "chapter"); ch.id = "draft-" + d.id;
+    const head = el("div", "chapter-head");
+    head.append(el("h3", null, "Draft " + roman(d.id)));
+    const meta = el("div", "meta");
+    meta.append(el("span", null, fmtDate(d.date)));
+    meta.append(el("span", "chip " + (d.status === "live" ? "live" : "done"), d.status === "live" ? "In progress" : (d.champion ? "Won by " + d.champion : "Complete")));
+    head.append(meta); ch.append(head);
+
+    const decks = el("div", "decks");
+    [...d.decks].sort((a, b) => { const [aw, al] = recordIn(d, a.player), [bw, bl] = recordIn(d, b.player); return (bw - aw) || (al - bl) || a.player.localeCompare(b.player); })
+      .forEach(dk => {
+        const card = el("div", "deck" + (d.champion === dk.player ? " champion" : ""));
+        const who = el("div", "who"); who.append(el("span", "name", dk.player));
+        const [w, l] = recordIn(d, dk.player); who.append(record(w, l));
+        card.append(who, el("span", "arch", dk.archetype));
+        const c = el("span", "colors"); c.append(pips(dk.colors, dk.splash), " " + dk.colorName); card.append(c);
+        decks.append(card);
+      });
+    ch.append(decks);
+
+    const ms = el("div", "matches"); ms.append(el("h4", null, "Matches"));
+    if (!d.matches.length) ms.append(el("div", "match", "No matches recorded yet."));
+    d.matches.forEach(m => {
+      const row = el("div", "match");
+      row.append(el("b", null, m.winner), " defeated ", el("b", null, m.loser));
+      if (m.score) row.append(" ", el("span", "score", m.score));
+      ms.append(row);
+    });
+    ch.append(ms);
+
+    if (d.keyCards && d.keyCards.length) {
+      const kr = el("div", "card-row"); kr.append(el("h4", null, "Standouts this draft"));
+      kr.append(cardGrid(d.keyCards)); ch.append(kr);
+    }
+    draftsEl.append(ch);
+  });
+
+  function cardGrid(list) {
+    const g = el("div", "cards");
+    list.forEach(c => {
+      const f = el("figure", "card");
+      const img = el("img"); img.src = c.img; img.alt = c.name; img.loading = "lazy"; f.append(img);
+      const cap = el("figcaption"); cap.append(el("b", null, c.name));
+      if (c.note) cap.append(el("span", null, c.note));
+      f.append(cap); g.append(f);
+    });
+    return g;
+  }
+  // Thumbnails that open a large preview on hover, focus or tap
+  const preview = el("div", "preview"); preview.hidden = true;
+  const pImg = el("img"); pImg.alt = ""; const pCap = el("div", "cap");
+  preview.append(pImg, pCap); document.body.append(preview);
+  let current = null;
+  function show(btn, c) {
+    current = btn;
+    pImg.src = c.img; pCap.textContent = c.note || ""; pCap.hidden = !c.note;
+    preview.hidden = false;
+    const r = btn.getBoundingClientRect(), w = preview.offsetWidth, h = preview.offsetHeight, m = 12;
+    let left = r.right + m;
+    if (left + w > innerWidth - m) left = r.left - m - w;
+    if (left < m) left = Math.max(m, Math.min(innerWidth - w - m, r.left + r.width / 2 - w / 2));
+    let top = r.top + r.height / 2 - h / 2;
+    top = Math.max(m, Math.min(innerHeight - h - m, top));
+    preview.style.left = left + "px"; preview.style.top = top + "px";
+  }
+  function hide() { preview.hidden = true; current = null; }
+  addEventListener("scroll", hide, { passive: true });
+  document.addEventListener("click", e => { if (!e.target.closest(".thumb")) hide(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") hide(); });
+  function makeThumb(c) {
+    const b = el("button", "thumb"); b.type = "button";
+    b.setAttribute("aria-label", c.name);
+    const img = el("img"); img.src = c.img; img.alt = ""; img.loading = "lazy"; b.append(img);
+    b.addEventListener("mouseenter", () => show(b, c));
+    b.addEventListener("mouseleave", hide);
+    b.addEventListener("focus", () => show(b, c));
+    b.addEventListener("blur", hide);
+    b.addEventListener("click", () => show(b, c));
+    return b;
+  }
+
+  // The cube list and the two tiers
+  const CUBE = JSON.parse(document.getElementById("cube").textContent);
+  const byId = new Map(CUBE.map(c => [c.id, { ...c, img: c.img || ("cards/" + c.id + ".jpg") }]));
+  const groupOf = c => c.ci.length === 0 ? "C" : c.ci.length > 1 ? "M" : c.ci[0];
+  let tiers = { top: [...data.best], bottom: [...data.worst] };
+  let canWrite = false, tierRef = null;
+  let cubeQuery = "", cubeColor = "";
+
+  function renderTier(id, list, emptyText, key) {
+    const host = document.getElementById(id); host.replaceChildren();
+    const cards = list.map(x => byId.get(x)).filter(Boolean);
+    if (!cards.length) { host.append(el("div", "empty", emptyText)); return; }
+    const g = el("div", "thumbs");
+    cards.forEach(c => {
+      const wrap = el("div", "tier-item"); wrap.append(makeThumb(c));
+      if (canWrite) {
+        const rm = el("button", "rm", "×"); rm.type = "button"; rm.setAttribute("aria-label", "Remove " + c.name);
+        rm.addEventListener("click", () => setTier(c.id, key, false));
+        wrap.append(rm);
+      }
+      g.append(wrap);
+    });
+    host.append(g);
+  }
+  const cubeNodes = CUBE.map(raw => {
+    const c = byId.get(raw.id);
+    const node = el("div", "ccard"); node.append(makeThumb(c));
+    const btns = el("div", "tbtns");
+    const top = el("button", "tbtn top", "Top"); top.type = "button"; top.setAttribute("aria-label", "Add " + c.name + " to Best");
+    const bot = el("button", "tbtn bot", "Bottom"); bot.type = "button"; bot.setAttribute("aria-label", "Add " + c.name + " to Worst");
+    top.addEventListener("click", () => setTier(c.id, "top", !tiers.top.includes(c.id)));
+    bot.addEventListener("click", () => setTier(c.id, "bottom", !tiers.bottom.includes(c.id)));
+    btns.append(top, bot); btns.hidden = true; node.append(btns);
+    return { c, node, top, bot, btns };
+  });
+  function renderCube() {
+    const grid = document.getElementById("cube-grid"), frag = document.createDocumentFragment(); let n = 0;
+    cubeNodes.forEach(x => {
+      const inTop = tiers.top.includes(x.c.id), inBot = tiers.bottom.includes(x.c.id);
+      x.node.classList.toggle("is-top", inTop); x.node.classList.toggle("is-bottom", inBot);
+      x.top.setAttribute("aria-pressed", String(inTop)); x.bot.setAttribute("aria-pressed", String(inBot));
+      x.btns.hidden = !canWrite;
+      if (cubeColor && groupOf(x.c) !== cubeColor) return;
+      if (cubeQuery && !x.c.name.toLowerCase().includes(cubeQuery)) return;
+      frag.append(x.node); n++;
+    });
+    grid.replaceChildren(frag);
+    document.getElementById("cube-empty").hidden = n > 0;
+    document.getElementById("cube-hint").hidden = !canWrite;
+  }
+  function renderCards() {
+    renderTier("best", tiers.top, "No cards here yet.", "top");
+    renderTier("worst", tiers.bottom, "No cards here yet.", "bottom");
+    renderCube();
+  }
+  document.getElementById("cube-note").textContent = CUBE.length + " cards";
+  document.getElementById("cube-search").addEventListener("input", e => { cubeQuery = e.target.value.trim().toLowerCase(); renderCube(); });
+  document.getElementById("color-chips").addEventListener("click", e => {
+    const b = e.target.closest(".cchip"); if (!b) return;
+    cubeColor = b.dataset.color;
+    document.querySelectorAll(".cchip").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    renderCube();
+  });
+  renderCards();
+
+  // Shared tiers, saved through the group's Google Apps Script
+  const API = "https://script.google.com/macros/s/AKfycbxFdb2bvsBVpN58jxoZFIOgIcxyCRuXZNTA7jNLoZF7BEgJUg7eMwhZ_LOj3IPB_h8/exec";
+  let busy = 0;
+  const st = el("span"); document.getElementById("cube-hint").append(" ", st);
+  const setStatus = s => { st.textContent = s; };
+  function apply(d) {
+    if (!d || !Array.isArray(d.top)) return;
+    tiers = { top: d.top.filter(x => byId.has(x)), bottom: (d.bottom || []).filter(x => byId.has(x)) };
+    renderCards();
+  }
+  function setTier(id, key, on) {
+    const next = { top: tiers.top.filter(x => x !== id), bottom: tiers.bottom.filter(x => x !== id) };
+    if (on) next[key].push(id);
+    tiers = next; hide(); renderCards();
+    if (!API) return;
+    busy++; setStatus("Saving…");
+    fetch(API, { method: "POST", body: JSON.stringify({ id, tier: on ? key : null }) })
+      .then(r => r.json())
+      .then(d => { busy--; if (!busy) { apply(d); setStatus("Saved for everyone."); } })
+      .catch(() => { busy--; setStatus("Couldn't save. Check your connection and try again."); });
+  }
+  function pull() {
+    if (!API || busy || document.hidden) return;
+    fetch(API).then(r => r.json()).then(d => { if (!busy) apply(d); }).catch(() => {});
+  }
+  if (API) {
+    canWrite = true; renderCards();
+    pull(); setInterval(pull, 30000);
+    addEventListener("focus", pull);
+    document.addEventListener("visibilitychange", pull);
+  }
+})();
+</script>
+<script>
+// Aged map-paper texture, drawn behind the page
+(function () {
+  const cv = document.createElement("canvas"); cv.className = "mapbg"; cv.setAttribute("aria-hidden", "true");
+  document.body.prepend(cv);
+  const rng = seed => () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
+  let grain = null, grainKey = "";
+  function grainTile(dark) {
+    const key = dark ? "d" : "l"; if (grain && grainKey === key) return grain;
+    const t = document.createElement("canvas"); t.width = t.height = 220;
+    const c = t.getContext("2d"), img = c.createImageData(220, 220), r = rng(97);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = r(), light = v > .5;
+      const base = light ? (dark ? 255 : 255) : (dark ? 0 : 70);
+      img.data[i] = base; img.data[i + 1] = light ? base - 8 : base * .8; img.data[i + 2] = light ? base - 30 : base * .5;
+      img.data[i + 3] = Math.floor(r() * (dark ? 14 : 22));
+    }
+    c.putImageData(img, 0, 0); grain = t; grainKey = key; return t;
+  }
+  function draw() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const cs = getComputedStyle(document.documentElement);
+    const dark = cs.colorScheme === "dark" || cs.getPropertyValue("color-scheme").trim() === "dark";
+    const stain = dark ? "0,0,0" : "120,78,30", hi = dark ? "255,236,200" : "255,250,236";
+    const r = rng(23), M = Math.max(W, H);
+    // mottled stains
+    for (let i = 0; i < 22; i++) {
+      const x = r() * W, y = r() * H, rad = M * (.12 + r() * .3), a = (dark ? .10 : .07) * (.4 + r());
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(${stain},${a})`); gr.addColorStop(1, `rgba(${stain},0)`);
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+    // a few lighter worn patches
+    for (let i = 0; i < 6; i++) {
+      const x = r() * W, y = r() * H, rad = M * (.08 + r() * .18);
+      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
+      gr.addColorStop(0, `rgba(${hi},${dark ? .025 : .18})`); gr.addColorStop(1, `rgba(${hi},0)`);
+      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+    }
+    // foxing spots
+    for (let i = 0; i < 40; i++) {
+      const x = r() * W, y = r() * H, rad = 1 + r() * 4;
+      g.fillStyle = `rgba(${stain},${(dark ? .18 : .1) * r()})`;
+      g.beginPath(); g.arc(x, y, rad, 0, Math.PI * 2); g.fill();
+    }
+    // paper fibres
+    g.lineWidth = .6;
+    for (let i = 0; i < 260; i++) {
+      const x = r() * W, y = r() * H, a = r() * Math.PI, l = 4 + r() * 14;
+      g.strokeStyle = `rgba(${r() > .5 ? stain : hi},${dark ? .08 : .09})`;
+      g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * .5 + (r() - .5) * 4, y + Math.sin(a) * l * .5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+    }
+    // fold creases
+    const fold = (x1, y1, x2, y2, ox, oy) => {
+      g.lineWidth = 1.2; g.strokeStyle = `rgba(${stain},${dark ? .22 : .09})`;
+      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+      g.lineWidth = 1; g.strokeStyle = `rgba(${hi},${dark ? .04 : .35})`;
+      g.beginPath(); g.moveTo(x1 + ox, y1 + oy); g.lineTo(x2 + ox, y2 + oy); g.stroke();
+    };
+    fold(W / 2, 0, W / 2, H, 1.5, 0);
+    fold(0, H / 2, W, H / 2, 0, 1.5);
+    // fine grain
+    g.fillStyle = g.createPattern(grainTile(dark), "repeat"); g.fillRect(0, 0, W, H);
+    // darkened, burnt-looking edges
+    const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.hypot(W, H) * .62);
+    v.addColorStop(0, `rgba(${stain},0)`); v.addColorStop(1, `rgba(${stain},${dark ? .55 : .3})`);
+    g.fillStyle = v; g.fillRect(0, 0, W, H);
+  }
+  let t; const redraw = () => { clearTimeout(t); t = setTimeout(draw, 150); };
+  addEventListener("resize", redraw);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", draw);
+  new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  draw();
+})();
+</script>
+
+</body>
+</html>
