@@ -402,7 +402,7 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
   const groupOf = c => c.ci.length === 0 ? "C" : c.ci.length > 1 ? "M" : c.ci[0];
   let tiers = { top: [...data.best], bottom: [...data.worst] };
   let canWrite = false, tierRef = null;
-  let cubeQuery = "", cubeColor = "";
+  let cubeQuery = "", cubeColor = "", tiersLoading = false;
 
   function renderTier(id, list, emptyText, key) {
     const host = document.getElementById(id); host.replaceChildren();
@@ -447,8 +447,8 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     document.getElementById("cube-hint").hidden = !canWrite;
   }
   function renderCards() {
-    renderTier("best", tiers.top, "No cards here yet.", "top");
-    renderTier("worst", tiers.bottom, "No cards here yet.", "bottom");
+    renderTier("best", tiers.top, tiersLoading ? "Loading…" : "No cards here yet.", "top");
+    renderTier("worst", tiers.bottom, tiersLoading ? "Loading…" : "No cards here yet.", "bottom");
     renderCube();
   }
   document.getElementById("cube-note").textContent = CUBE.length + " cards";
@@ -466,9 +466,18 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
   let busy = 0;
   const st = el("span"); document.getElementById("cube-hint").append(" ", st);
   const setStatus = s => { st.textContent = s; };
+  const clean = d => ({ top: d.top.filter(x => byId.has(x)), bottom: (d.bottom || []).filter(x => byId.has(x)) });
   function apply(d) {
     if (!d || !Array.isArray(d.top)) return;
-    tiers = { top: d.top.filter(x => byId.has(x)), bottom: (d.bottom || []).filter(x => byId.has(x)) };
+    tiers = clean(d); tiersLoading = false;
+    try { localStorage.setItem("cube-tiers", JSON.stringify(tiers)); } catch (e) {}
+    renderCards();
+  }
+  if (API) {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem("cube-tiers") || "null"); } catch (e) {}
+    if (cached && Array.isArray(cached.top)) tiers = clean(cached);
+    else { tiers = { top: [], bottom: [] }; tiersLoading = true; }
     renderCards();
   }
   function setTier(id, key, on) {
