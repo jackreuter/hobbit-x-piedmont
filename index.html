@@ -197,7 +197,7 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     <div class="section-head"><h2>Decks</h2><span class="note" id="standings-note"></span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th></th><th>Deck</th><th>Pilot</th><th class="num">Draft</th><th class="num">Record</th><th class="num">Win %</th></tr></thead>
+        <thead><tr><th></th><th>Deck</th><th>Pilot</th><th class="num">Draft</th><th class="num">Record</th></tr></thead>
         <tbody id="standings"></tbody>
       </table>
     </div>
@@ -306,7 +306,6 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     tr.append(el("td", null, r.dk.player));
     tr.append(el("td", "num", roman(r.d.id)));
     const rec = el("td", "num"); rec.append(record(r.w, r.l)); tr.append(rec);
-    tr.append(el("td", "num pct", (r.w + r.l) ? Math.round(100 * pct(r)) + "%" : "—"));
     tbody.append(tr);
   });
   const totalMatches = data.drafts.reduce((n, d) => n + d.matches.length, 0);
@@ -478,7 +477,7 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     tiers = next; hide(); renderCards();
     if (!API) return;
     busy++; setStatus("Saving…");
-    fetch(API, { method: "POST", body: JSON.stringify({ id, tier: on ? key : null }) })
+    fetch(API, { method: "POST", body: JSON.stringify({ id, tier: on ? key : null, name: (byId.get(id) || {}).name || "" }) })
       .then(r => r.json())
       .then(d => { busy--; if (!busy) { apply(d); setStatus("Saved for everyone."); } })
       .catch(() => { busy--; setStatus("Couldn't save. Check your connection and try again."); });
