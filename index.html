@@ -443,6 +443,11 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
       frag.append(x.node); n++;
     });
     grid.replaceChildren(frag);
+    const CNAME = { W: "white", U: "blue", B: "black", R: "red", G: "green", M: "multicolor", C: "colorless & land" };
+    const word = n === 1 ? "card" : "cards";
+    document.getElementById("cube-note").textContent = cubeQuery
+      ? `${n} of ${CUBE.length} cards`
+      : cubeColor ? `${n} ${CNAME[cubeColor]} ${word}` : `${n} ${word}`;
     document.getElementById("cube-empty").hidden = n > 0;
     document.getElementById("cube-hint").hidden = !canWrite;
   }
@@ -451,7 +456,6 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     renderTier("worst", tiers.bottom, tiersLoading ? "Loading…" : "No cards here yet.", "bottom");
     renderCube();
   }
-  document.getElementById("cube-note").textContent = CUBE.length + " cards";
   document.getElementById("cube-search").addEventListener("input", e => { cubeQuery = e.target.value.trim().toLowerCase(); renderCube(); });
   document.getElementById("color-chips").addEventListener("click", e => {
     const b = e.target.closest(".cchip"); if (!b) return;
