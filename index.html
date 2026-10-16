@@ -852,13 +852,25 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
     tiers = next; hide(); renderCards();
     if (!API) return;
     busy++; setStatus("Saving…");
-    fetch(API, { method: "POST", body: JSON.stringify({ id, tier: on ? key : null, name: (byId.get(id) || {}).name || "" }) })
-      .then(r => r.json())
+    queuePost(() => ({ id, tier: on ? key : null, name: (byId.get(id) || {}).name || "" }))
       .then(d => { busy--; if (!busy) { apply(d); setStatus("Saved for everyone."); } })
       .catch(() => { busy--; setStatus("Couldn't save. Check your connection and try again."); });
   }
+  // Send saves one at a time (the script is slow and locks while writing), retrying once on failure
+  let chain = Promise.resolve();
+  function postOnce(make) {
+    return fetch(API, { method: "POST", body: JSON.stringify(make()) })
+      .then(r => r.json())
+      .then(d => { if (!d || d.error) throw new Error((d && d.error) || "no response"); return d; });
+  }
+  function queuePost(make) {
+    const run = () => postOnce(make).catch(() => new Promise(res => setTimeout(res, 1500)).then(() => postOnce(make)));
+    const p = chain.then(run, run);
+    chain = p.catch(() => {});
+    return p;
+  }
   function pull() {
-    if (!API || busy || document.hidden) return;
+    if (!API || busy || deckBusy || document.hidden) return;
     fetch(API).then(r => r.json()).then(d => { if (!busy) apply(d); }).catch(() => {});
   }
   let deckBusy = 0;
@@ -866,10 +878,9 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
   if (API) {
     enableDeckEditing({ save(key, o) {
       deckBusy++; deckStatus.textContent = "Saving…";
-      fetch(API, { method: "POST", body: JSON.stringify({ type: "deck", key, name: o.name, pilot: o.pilot, w: o.w, l: o.l }) })
-        .then(r => r.json())
-        .then(d => { deckBusy--; if (!deckBusy) { deckStatus.textContent = d && d.error ? "Couldn't save that change." : "Saved"; if (!d.error) apply(d); } })
-        .catch(() => { deckBusy--; deckStatus.textContent = "Couldn't save. Check your connection."; });
+      queuePost(() => { const x = deckEdits[key] || o; return { type: "deck", key, name: x.name, pilot: x.pilot, w: x.w, l: x.l }; })
+        .then(d => { deckBusy--; if (!deckBusy) { deckStatus.textContent = "Saved"; apply(d); } })
+        .catch(() => { deckBusy--; deckStatus.textContent = "Couldn't save. Check your connection and try again."; });
     } });
   }
   if (API) {
