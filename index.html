@@ -38,6 +38,8 @@
   --label: "Alegreya Sans SC", "Gill Sans", "Trebuchet MS", sans-serif;
 }
 :root { color-scheme: light; }
+button, a, input, summary { -webkit-tap-highlight-color: transparent; }
+button:focus:not(:focus-visible) { outline: none; }
 * { box-sizing: border-box; }
 :root { --map-ink: rgba(107, 93, 69, .24); }
 .mapbg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
@@ -213,6 +215,16 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
 .finis { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; margin-top: -8px; }
 .finis img { width: 92px; height: auto; opacity: .85; }
 .finis p { margin: 0; font-family: var(--fell); font-style: italic; font-size: 14px; color: var(--ink-soft); max-width: 40ch; }
+
+/* Phones: four cards across in the cube list, deck lists and power rankings */
+@media (max-width: 560px) {
+  .cube-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px 6px; }
+  .thumbs, .deck-list .thumbs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px 6px; }
+  .thumb, .deck-list .thumb { width: auto; }
+  .tbtns { gap: 3px; }
+  .tbtn { font-size: 11px; letter-spacing: 0; padding: 3px 0; }
+  .tier-item { min-width: 0; }
+}
 </style>
 
 <div class="book">
