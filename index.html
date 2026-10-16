@@ -86,6 +86,7 @@ td.player small { display: inline-flex; vertical-align: 2px; margin-left: 12px; 
 @media (max-width: 560px) { td.player small { display: flex; margin-left: 0; margin-top: 4px; } }
 .edit-name { width: 100%; min-width: 6.5em; max-width: 16em; font-weight: 700; margin-bottom: 4px; display: block; }
 td.date { white-space: nowrap; color: var(--ink-soft); }
+td.loading-row { text-align: center; font-family: var(--fell); font-style: italic; color: var(--ink-soft); padding: 28px 10px; }
 .pilot-date { display: none; }
 @media (max-width: 560px) {
   th.date-h, td.date { display: none; }
@@ -584,7 +585,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
 
   // Standings: one row per deck, across every draft
   const deckEdits = {};            // saved changes from the page: key -> { name, pilot, w, l }
-  let editingDecks = false, deckStore = null;
+  let editingDecks = false, deckStore = null, decksLoading = false;
   const openDecks = new Set();
   const deckKey = (d, dk) => "d" + d.id + "-" + dk.player.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   function deckView(d, dk) {
@@ -598,6 +599,10 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   }
   const tbody = document.getElementById("standings");
   function renderStandings() {
+    if (decksLoading) {
+      const tr = el("tr"), td = el("td", "loading-row", "Loading…"); td.colSpan = 4; tr.append(td);
+      tbody.replaceChildren(tr); return;
+    }
     const rows = [];
     data.drafts.forEach(d => d.decks.forEach(dk => rows.push({ d, dk, key: deckKey(d, dk), v: deckView(d, dk), champ: d.champion === dk.player })));
     const pct = r => (r.v.w + r.v.l) ? r.v.w / (r.v.w + r.v.l) : -1;
@@ -853,19 +858,27 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
     if (!d || !Array.isArray(d.top)) return;
     tiers = clean(d); tiersLoading = false;
     if (d.decks && typeof d.decks === "object" && !deckBusy) {
-      Object.keys(deckEdits).forEach(k => delete deckEdits[k]);
-      Object.entries(d.decks).forEach(([k, o]) => { deckEdits[k] = { name: o.name || "", pilot: o.pilot || "", date: o.date || "", w: Number.isInteger(o.w) ? o.w : undefined, l: Number.isInteger(o.l) ? o.l : undefined }; });
+      setDecks(d.decks); decksLoading = false;
       if (!editingDecks) renderStandings();
     }
-    try { localStorage.setItem("cube-tiers", JSON.stringify(tiers)); } catch (e) {}
+    try { localStorage.setItem("cube-state", JSON.stringify({ top: tiers.top, bottom: tiers.bottom, decks: d.decks || {} })); } catch (e) {}
     renderCards();
   }
+  function setDecks(decks) {
+    Object.keys(deckEdits).forEach(k => delete deckEdits[k]);
+    Object.entries(decks).forEach(([k, o]) => { deckEdits[k] = { name: o.name || "", pilot: o.pilot || "", date: o.date || "", w: Number.isInteger(o.w) ? o.w : undefined, l: Number.isInteger(o.l) ? o.l : undefined }; });
+  }
+  // Until the sheet answers, show the last saved copy from this browser, or "Loading…" (never the built-in defaults)
   if (API) {
     let cached = null;
-    try { cached = JSON.parse(localStorage.getItem("cube-tiers") || "null"); } catch (e) {}
-    if (cached && Array.isArray(cached.top)) tiers = clean(cached);
-    else { tiers = { top: [], bottom: [] }; tiersLoading = true; }
-    renderCards();
+    try { cached = JSON.parse(localStorage.getItem("cube-state") || "null"); } catch (e) {}
+    if (cached && Array.isArray(cached.top)) {
+      tiers = clean(cached);
+      setDecks(cached.decks || {});
+    } else {
+      tiers = { top: [], bottom: [] }; tiersLoading = true; decksLoading = true;
+    }
+    renderStandings(); renderCards();
   }
   function setTier(id, key, on) {
     const next = { top: tiers.top.filter(x => x !== id), bottom: tiers.bottom.filter(x => x !== id) };
@@ -892,7 +905,12 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   }
   function pull() {
     if (!API || busy || deckBusy || document.hidden) return;
-    fetch(API).then(r => r.json()).then(d => { if (!busy) apply(d); }).catch(() => {});
+    fetch(API).then(r => r.json()).then(d => { if (!busy) apply(d); }).catch(() => {
+      if (decksLoading || tiersLoading) {
+        decksLoading = false; tiersLoading = false; renderStandings(); renderCards();
+        document.getElementById("deck-status").textContent = "Couldn't load saved records. Try refreshing.";
+      }
+    });
   }
   let deckBusy = 0;
   const deckStatus = document.getElementById("deck-status");
