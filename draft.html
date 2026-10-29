@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>New Deck · The Hobbit Cube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Alegreya:ital,wght@0,400;0,600;0,700;1,400&family=Alegreya+Sans+SC:wght@500;700&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #efe6d0; --page: #f7f0dd; --ink: #2b2418; --ink-soft: #6b5d45; --rule: #cdbd98;
+  --red: #8e2a1f; --green: #2f5a3a; --gold: #a67c1e;
+  --mana-w: #f4ecd2; --mana-u: #2a6ca8; --mana-b: #3b3433; --mana-r: #c2442b; --mana-g: #3f7d47;
+  --display: "IM Fell English SC", Georgia, serif;
+  --body: "Alegreya", Georgia, serif;
+  --label: "Alegreya Sans SC", "Gill Sans", sans-serif;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.45 var(--body); }
+main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; background: var(--page); min-height: 100vh; border-left: 1px solid var(--rule); border-right: 1px solid var(--rule); }
+a { color: var(--green); }
+h1 { font: 2rem/1.1 var(--display); margin: 8px 0 4px; }
+h2 { font: 1.35rem/1.2 var(--display); margin: 28px 0 8px; border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+.sub { color: var(--ink-soft); margin: 0 0 8px; font-style: italic; }
+.label { font: 700 .82rem var(--label); letter-spacing: .04em; color: var(--ink-soft); }
+button, .btn { font: 700 1rem var(--label); letter-spacing: .03em; border: 1px solid var(--ink); background: var(--page); color: var(--ink); border-radius: 6px; padding: 10px 16px; cursor: pointer; }
+.btn.primary, button.primary { background: var(--green); color: #fff; border-color: var(--green); }
+button:disabled { opacity: .5; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+#file { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.photos { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.photo { width: 104px; font: .8rem var(--label); color: var(--ink-soft); }
+.photo img { width: 104px; height: 104px; object-fit: cover; border: 1px solid var(--rule); border-radius: 4px; display: block; }
+.photo.err { color: var(--red); }
+textarea { width: 100%; min-height: 120px; font: .95rem/1.4 var(--body); border: 1px solid var(--rule); border-radius: 6px; padding: 8px; background: #fffaf0; }
+details { margin-top: 12px; }
+summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 10px; }
+.card { position: relative; }
+.card img { width: 100%; aspect-ratio: 488/680; border-radius: 5%; display: block; background: var(--rule); }
+.card.unsure img { outline: 3px dashed var(--gold); outline-offset: 2px; }
+.card .x { position: absolute; top: 4px; right: 4px; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: rgba(43,36,24,.8); color: #fff; border: 0; font: 700 18px/30px var(--label); }
+.card .read { font: .78rem/1.25 var(--label); color: var(--gold); margin-top: 3px; overflow-wrap: anywhere; }
+.card .cutnote { font: .78rem var(--label); color: var(--red); }
+.basics { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.basic { display: flex; align-items: center; justify-content: space-between; border: 1px solid var(--rule); border-radius: 6px; padding: 4px 6px 4px 10px; }
+.basic button { width: 36px; height: 36px; padding: 0; }
+.basic .n { min-width: 2ch; text-align: center; font-weight: 700; }
+.summary { font: 700 1.05rem var(--label); }
+.pip { display: inline-block; width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(43,36,24,.35); vertical-align: -3px; margin-right: 3px; }
+.pip.W { background: var(--mana-w); } .pip.U { background: var(--mana-u); } .pip.B { background: var(--mana-b); } .pip.R { background: var(--mana-r); } .pip.G { background: var(--mana-g); }
+input[type=search] { width: 100%; font: 1rem var(--body); padding: 10px; border: 1px solid var(--rule); border-radius: 6px; background: #fffaf0; }
+.sugg { list-style: none; margin: 6px 0 0; padding: 0; }
+.sugg li button { width: 100%; text-align: left; font: 1rem var(--body); border-color: var(--rule); margin-bottom: 4px; padding: 8px 10px; }
+.unread { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.unread button { font: .9rem var(--body); padding: 4px 10px; border-color: var(--rule); color: var(--ink-soft); }
+.status { margin: 8px 0; color: var(--ink-soft); font-style: italic; }
+.status.err { color: var(--red); font-style: normal; }
+pre { white-space: pre-wrap; font-size: .8rem; background: #fffaf0; border: 1px solid var(--rule); padding: 8px; border-radius: 6px; }
+@media (max-width: 560px) { .grid { grid-template-columns: repeat(3, 1fr); gap: 8px; } h1 { font-size: 1.7rem; } }
+</style>
+</head>
+<body>
+<main>
+  <a href="./" class="label">← The Hobbit Cube</a>
+  <h1>Digitize a Deck</h1>
+  <p class="sub">Prototype. Photograph a deck with every card's title showing, then check what was found. Nothing is saved yet.</p>
+
+  <h2>Photos</h2>
+  <div class="row">
+    <label class="btn primary" for="file">Add photos</label>
+    <input id="file" type="file" accept="image/*" multiple>
+    <button id="reset" type="button">Start over</button>
+  </div>
+  <div class="photos" id="photos"></div>
+  <details id="paste-box">
+    <summary>Or paste text (from Google Lens)</summary>
+    <p class="sub">In Google Photos: open the photo, tap Lens → Text → Select all → Copy, then paste here.</p>
+    <textarea id="paste" placeholder="Card names, one per line…"></textarea>
+    <div class="row"><button id="paste-go" type="button">Find cards</button></div>
+  </details>
+  <p class="status" id="status"></p>
+
+  <section id="results" hidden>
+    <h2>Cards found</h2>
+    <p class="summary" id="summary"></p>
+    <p class="sub">Dashed gold outline = not sure. Tap × to remove a wrong card.</p>
+    <div class="grid" id="grid"></div>
+
+    <h2>Basic lands</h2>
+    <div class="basics" id="basics"></div>
+
+    <h2>Add a missing card</h2>
+    <input type="search" id="search" placeholder="Search the cube…" autocomplete="off">
+    <ul class="sugg" id="sugg"></ul>
+    <div id="unread-wrap" hidden>
+      <p class="label" style="margin:14px 0 0">Text that didn't match a card (tap to search it)</p>
+      <div class="unread" id="unread"></div>
+    </div>
+
+    <h2>Deck list</h2>
+    <div class="row"><button id="copy" class="primary" type="button">Copy list</button><span class="status" id="copy-status"></span></div>
+    <details><summary>Raw text from the photos</summary><pre id="raw"></pre></details>
+  </section>
+</main>
+<script>
+(() => {
+  const API = "https://script.google.com/macros/s/AKfycbxFdb2bvsBVpN58jxoZFIOgIcxyCRuXZNTA7jNLoZF7BEgJUg7eMwhZ_LOj3IPB_h8/exec";
+  const BASICS = ["Plains", "Island", "Swamp", "Mountain", "Forest"];
+  const BASIC_CI = { Plains: "W", Island: "U", Swamp: "B", Mountain: "R", Forest: "G" };
+  const $ = id => document.getElementById(id);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const norm = s => String(s).normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+  // Deck being built: card id -> { card, sure, read }, plus basic land counts
+  let picked = new Map(), basics = {}, rawText = [], unread = [];
+  BASICS.forEach(b => basics[b] = 0);
+
+  let cards = [], keys = [];
+  const ready = fetch("cards.json").then(r => r.json()).then(list => {
+    cards = list;
+    const seen = new Set();
+    list.forEach(c => [c.name, c.name.split(" // ")[0]].forEach(n => {
+      const k = norm(n);
+      if (!seen.has(k)) { seen.add(k); keys.push({ k, card: c }); }
+    }));
+    BASICS.forEach(b => keys.push({ k: norm(b), basic: b }));
+  });
+
+  // Similarity from edit distance: 1 = identical
+  function sim(a, b) {
+    if (a === b) return 1;
+    const m = a.length, n = b.length;
+    let prev = Array.from({ length: n + 1 }, (_, j) => j), cur = new Array(n + 1);
+    for (let i = 1; i <= m; i++) {
+      cur[0] = i;
+      for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      [prev, cur] = [cur, prev];
+    }
+    return 1 - prev[n] / Math.max(m, n);
+  }
+  // Best card for one line of OCR text. Also tries the start of the line, since mana costs often trail the name.
+  function bestMatch(line) {
+    const k = norm(line);
+    if (k.length < 4) return null;
+    let best = null, score = 0;
+    for (const e of keys) {
+      if (k.length < e.k.length * 0.6) continue;
+      let s = sim(k, e.k);
+      if (k.length > e.k.length) s = Math.max(s, sim(k.slice(0, e.k.length + 1), e.k) - 0.02);
+      if (s > score) { score = s; best = e; }
+    }
+    return score >= 0.75 ? { ...best, score } : null;
+  }
+
+  function addText(text) {
+    rawText.push(text);
+    let found = 0;
+    text.split(/\n+/).forEach(line => {
+      line = line.trim(); if (!line) return;
+      const m = bestMatch(line);
+      if (!m) {
+        if (/[a-z]{3}/i.test(line) && norm(line).length >= 6 && norm(line).length <= 40 && !unread.includes(line)) unread.push(line);
+        return;
+      }
+      found++;
+      if (m.basic) { basics[m.basic]++; return; }
+      const sure = m.score >= 0.9, prev = picked.get(m.card.id);
+      if (!prev || (sure && !prev.sure)) picked.set(m.card.id, { card: m.card, sure, read: sure ? "" : line });
+    });
+    render();
+    return found;
+  }
+
+  // Shrink the photo to fit Drive's 2 MB OCR limit while keeping titles as large as possible
+  async function prep(file) {
+    const bmp = await createImageBitmap(file);
+    const c = document.createElement("canvas"), ctx = c.getContext("2d");
+    let max = 3600, q = 0.88, blob;
+    for (let i = 0; i < 8; i++) {
+      const s = Math.min(1, max / Math.max(bmp.width, bmp.height));
+      c.width = Math.round(bmp.width * s); c.height = Math.round(bmp.height * s);
+      ctx.drawImage(bmp, 0, 0, c.width, c.height);
+      blob = await new Promise(res => c.toBlob(res, "image/jpeg", q));
+      if (blob.size < 1.9e6) break;
+      max = Math.round(max * 0.88); q = Math.max(0.72, q - 0.04);
+    }
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.readAsDataURL(blob); });
+    return { b64, w: c.width, h: c.height, kb: Math.round(blob.size / 1024) };
+  }
+
+  async function ocr(b64) {
+    const r = await fetch(API, { method: "POST", body: JSON.stringify({ type: "ocr", image: b64 }) });
+    const d = await r.json().catch(() => null);
+    if (!d || d.error || typeof d.text !== "string") throw new Error((d && d.error) || "no text came back");
+    return d.text;
+  }
+
+  $("file").addEventListener("change", async e => {
+    const files = [...e.target.files]; e.target.value = "";
+    await ready;
+    for (const f of files) {
+      const box = el("div", "photo"), img = el("img"), cap = el("div", null, "Shrinking…");
+      img.src = URL.createObjectURL(f); box.append(img, cap); $("photos").append(box);
+      try {
+        const p = await prep(f);
+        cap.textContent = `Reading… (${p.w}×${p.h})`;
+        const t0 = Date.now();
+        const text = await ocr(p.b64);
+        const n = addText(text);
+        cap.textContent = `${n} found · ${Math.round((Date.now() - t0) / 1000)}s`;
+      } catch (err) {
+        box.classList.add("err"); cap.textContent = "Couldn't read: " + err.message;
+      }
+    }
+  });
+  $("paste-go").addEventListener("click", async () => {
+    await ready;
+    const t = $("paste").value.trim(); if (!t) return;
+    const n = addText(t); $("paste").value = "";
+    $("status").textContent = n + " lines matched a card.";
+  });
+  $("reset").addEventListener("click", () => {
+    picked = new Map(); rawText = []; unread = []; BASICS.forEach(b => basics[b] = 0);
+    $("photos").replaceChildren(); $("status").textContent = ""; render();
+  });
+
+  function render() {
+    const any = picked.size || BASICS.some(b => basics[b]);
+    $("results").hidden = !any;
+    if (!any) return;
+    const list = [...picked.values()].sort((a, b) => a.sure - b.sure || a.card.name.localeCompare(b.card.name));
+    $("grid").replaceChildren(...list.map(p => {
+      const d = el("div", "card" + (p.sure ? "" : " unsure")), img = el("img");
+      img.src = p.card.img; img.alt = p.card.name; img.title = p.card.name; img.loading = "lazy";
+      const x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Remove " + p.card.name);
+      x.addEventListener("click", () => { picked.delete(p.card.id); render(); });
+      d.append(img, x);
+      if (!p.sure) d.append(el("div", "read", "read as “" + p.read + "”"));
+      if (p.card.cut) d.append(el("div", "cutnote", "not in current cube"));
+      return d;
+    }));
+    $("basics").replaceChildren(...BASICS.map(b => {
+      const row = el("div", "basic"), minus = el("button", null, "−"), plus = el("button", null, "+");
+      minus.type = plus.type = "button";
+      minus.addEventListener("click", () => { basics[b] = Math.max(0, basics[b] - 1); render(); });
+      plus.addEventListener("click", () => { basics[b]++; render(); });
+      const r = el("span"); r.append(el("span", "pip " + BASIC_CI[b]), b);
+      const ctl = el("span", "row"); ctl.style.gap = "6px"; ctl.append(minus, el("span", "n", basics[b]), plus);
+      row.append(r, ctl); return row;
+    }));
+    const nb = BASICS.reduce((s, b) => s + basics[b], 0), total = picked.size + nb;
+    const ci = new Set(); picked.forEach(p => { if (!p.card.land) [...p.card.ci].forEach(c => ci.add(c)); });
+    const sum = $("summary"); sum.replaceChildren();
+    "WUBRG".split("").filter(c => ci.has(c)).forEach(c => sum.append(el("span", "pip " + c)));
+    sum.append(` ${total} cards · ${picked.size} spells & lands + ${nb} basics`);
+    $("unread-wrap").hidden = !unread.length;
+    $("unread").replaceChildren(...unread.map(t => {
+      const b = el("button", null, t); b.type = "button";
+      b.addEventListener("click", () => { $("search").value = t; suggest(); $("search").focus(); });
+      return b;
+    }));
+    $("raw").textContent = rawText.join("\n\n———\n\n");
+  }
+
+  function suggest() {
+    const q = norm($("search").value);
+    if (q.length < 2) { $("sugg").replaceChildren(); return; }
+    const scored = cards.map(c => { const k = norm(c.name); return { c, s: k.includes(q) ? 2 - k.indexOf(q) / 100 : sim(q, k.slice(0, q.length + 2)) }; })
+      .filter(x => x.s > 0.6).sort((a, b) => (b.s - a.s) || (!!a.c.cut - !!b.c.cut)).slice(0, 6);
+    $("sugg").replaceChildren(...scored.map(({ c }) => {
+      const li = el("li"), b = el("button", null, c.name + (c.cut ? " (cut)" : "")); b.type = "button";
+      b.addEventListener("click", () => {
+        picked.set(c.id, { card: c, sure: true, read: "" });
+        unread = unread.filter(t => norm(t) !== norm($("search").value));
+        $("search").value = ""; $("sugg").replaceChildren(); render();
+      });
+      li.append(b); return li;
+    }));
+  }
+  $("search").addEventListener("input", suggest);
+
+  $("copy").addEventListener("click", async () => {
+    const lines = [...picked.values()].map(p => "1 " + p.card.name).sort();
+    BASICS.forEach(b => { if (basics[b]) lines.push(basics[b] + " " + b); });
+    try { await navigator.clipboard.writeText(lines.join("\n")); $("copy-status").textContent = "Copied."; }
+    catch (e) { $("raw").textContent = lines.join("\n"); $("copy-status").textContent = "Couldn't copy; the list is under Raw text."; }
+  });
+})();
+</script>
+</body>
+</html>
