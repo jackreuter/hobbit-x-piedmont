@@ -288,7 +288,7 @@ function readCube_(ss) {
 // ---- Deck photos -> text ------------------------------------------------------
 // Uses Google Drive's free OCR: the photo is uploaded as a Google Doc (Drive turns the
 // picture into text), the text is read, and the Doc goes to the trash.
-// Needs the Drive service: Services (+) in the left bar > Drive API > Add.
+// The Drive service and Drive/Docs permissions are listed in appsscript.json.
 // Drive only OCRs images up to 2 MB, so the page shrinks photos before sending.
 function ocr_(op) {
   const b64 = String(op.image || "");
@@ -304,5 +304,8 @@ function ocr_(op) {
 
 // Run once from the editor after adding the code above, to approve Drive and Docs access.
 function authorizeOcr() {
-  Logger.log("Drive OK: " + DriveApp.getRootFolder().getName() + ", Docs OK: " + typeof DocumentApp.openById);
+  const f = Drive.Files.create({ name: "OCR permission check", mimeType: MimeType.GOOGLE_DOCS }, Utilities.newBlob("ok", "text/plain"));
+  Logger.log("Drive OK, Docs OK: " + DocumentApp.openById(f.id).getBody().getText());
+  DriveApp.getFileById(f.id).setTrashed(true);
 }
+
