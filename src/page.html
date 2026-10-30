@@ -74,7 +74,17 @@ a.xbtn { text-decoration: none; display: inline-block; }
 .xbtn.add { font-size: 13px; padding: 4px 12px; color: var(--ink); border-color: color-mix(in srgb, var(--ink) 40%, transparent); }
 .draft-pick { font-family: var(--label); font-size: 14px; color: var(--ink); background: color-mix(in srgb, var(--page) 60%, transparent); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; max-width: 100%; }
 .draft-pick:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
-@media (max-width: 560px) { td.player small { display: flex; margin-left: 0; margin-top: 4px; } }
+.deck-acts { display: inline-flex; gap: 8px; margin-left: 10px; vertical-align: 2px; font-weight: 400; }
+.deck-acts:empty, .pilot-inline { display: none; }
+/* Phones: two columns. The pilot moves under the deck name; the cards / Edit buttons get their own line. */
+@media (max-width: 560px) {
+  .pilot-col { display: none; }
+  td.player small { display: flex; margin-left: 0; margin-top: 4px; }
+  .pilot-inline { display: inline; font-style: normal; font-size: 15px; color: var(--ink-soft); }
+  .deck-acts { display: flex; margin: 8px 0 0; }
+  #decks td { padding: 12px 6px; }
+  #decks th { padding: 6px; }
+}
 td.loading-row { text-align: center; font-family: var(--fell); font-style: italic; color: var(--ink-soft); padding: 28px 10px; }
 .rec-btn { font: inherit; background: none; border: 0; padding: 4px 0; cursor: pointer; border-bottom: 1px dotted color-mix(in srgb, var(--ink-soft) 60%, transparent); }
 .rec-btn[aria-expanded="true"] { border-bottom-style: solid; }
@@ -231,7 +241,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
     <div class="section-head"><h2>Decks</h2><span class="deck-tools"><span class="note" id="deck-status" aria-live="polite"></span><select class="draft-pick" id="draft-pick" aria-label="Draft" hidden></select><a class="xbtn add" id="add-deck" href="draft.html">Add deck</a></span></div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Name</th><th>Pilot</th><th class="num">Record</th></tr></thead>
+        <thead><tr><th>Name</th><th class="pilot-col">Pilot</th><th class="num">Record</th></tr></thead>
         <tbody id="standings"></tbody>
       </table>
     </div>
@@ -616,14 +626,17 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
     rows.forEach(dk => {
       const tr = el("tr"); tr.dataset.key = dk.key;
       const deck = el("td", "player"); deck.append(dk.name || "Untitled deck");
-      const sub = el("small"); const pp = pips(dk.colors, dk.splash); pp.title = colorName(dk); pp.setAttribute("role", "img"); pp.setAttribute("aria-label", colorName(dk)); sub.append(pp); deck.append(sub);
+      const sub = el("small"); const pp = pips(dk.colors, dk.splash); pp.title = colorName(dk); pp.setAttribute("role", "img"); pp.setAttribute("aria-label", colorName(dk));
+      sub.append(pp, el("span", "pilot-inline", dk.pilot));   // the pilot shows here on phones, where the Pilot column is hidden
+      const acts = el("span", "deck-acts");
+      deck.append(sub, acts);
       let xbtn = null;
-      if (dk.cards.length || dk.sideboard.length) { xbtn = el("button", "xbtn", dk.cards.length + " cards"); xbtn.type = "button"; sub.append(xbtn); }
+      if (dk.cards.length || dk.sideboard.length) { xbtn = el("button", "xbtn", dk.cards.length + " cards"); xbtn.type = "button"; acts.append(xbtn); }
       if (canEditDecks) {
         const edit = el("a", "xbtn", "Edit"); edit.href = "draft.html?deck=" + encodeURIComponent(dk.key);
-        edit.setAttribute("aria-label", "Edit " + (dk.name || "deck")); sub.append(edit);
+        edit.setAttribute("aria-label", "Edit " + (dk.name || "deck")); acts.append(edit);
       }
-      tr.append(deck, el("td", null, dk.pilot));
+      tr.append(deck, el("td", "pilot-col", dk.pilot));
       const rec = el("td", "num");
       let recEl = record(dk.w, dk.l);
       if (canEditDecks) {
