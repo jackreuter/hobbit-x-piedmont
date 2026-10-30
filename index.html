@@ -622,7 +622,8 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   }));
   let decks = [...builtIn.values()];
   let decksLoading = false, canEditDecks = false, saveRecord = null;
-  let draftDate = new URLSearchParams(location.search).get("draft") || "";
+  // The draft to show comes from ?draft=YYYY-MM-DD, so a link or reload keeps the same draft
+  let wantedDraft = new URLSearchParams(location.search).get("draft") || "", draftDate = "";
   const openDecks = new Set(), openRecs = new Set();
   const COLOR_NAME = { W: "White", U: "Blue", B: "Black", R: "Red", G: "Green" };
   const colorName = dk => (dk.colors.map(c => COLOR_NAME[c]).join("-") || "Colorless") +
@@ -633,15 +634,16 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   const draftSel = document.getElementById("draft-pick"), addDeck = document.getElementById("add-deck");
   function renderDraftPicker() {
     const dates = [...new Set(decks.map(d => d.date).filter(Boolean))].sort();
-    if (!dates.includes(draftDate)) draftDate = dates[dates.length - 1] || "";
+    // Until the sheet has loaded, the wanted draft may not be in the list yet: show the newest meanwhile
+    draftDate = dates.includes(wantedDraft) ? wantedDraft : (dates[dates.length - 1] || "");
     draftSel.replaceChildren(...dates.map((d, i) => { const o = el("option", null, "Draft " + roman(i + 1) + " · " + shortDate(d)); o.value = d; return o; }).reverse());
     draftSel.value = draftDate; draftSel.hidden = !dates.length;
     addDeck.href = "draft.html" + (draftDate ? "?date=" + draftDate : "");
     addDeck.hidden = !canEditDecks;
   }
   draftSel.addEventListener("change", () => {
-    draftDate = draftSel.value; openRecs.clear(); renderStandings();
-    history.replaceState(null, "", "?draft=" + draftDate + location.hash);
+    wantedDraft = draftSel.value; openRecs.clear(); renderStandings();
+    const u = new URL(location.href); u.searchParams.set("draft", wantedDraft); history.replaceState(null, "", u);
   });
 
   const tbody = document.getElementById("standings");
