@@ -80,13 +80,17 @@ a.xbtn { text-decoration: none; display: inline-block; }
 .draft-pick { font-family: var(--label); font-size: 14px; color: var(--ink); background: color-mix(in srgb, var(--page) 60%, transparent); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; max-width: 100%; }
 .draft-pick:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
 .deck-acts { display: inline-flex; gap: 8px; margin-left: 10px; vertical-align: 2px; font-weight: 400; }
-.deck-acts:empty, .pilot-inline { display: none; }
+.pilot-inline { display: none; }
 /* Phones: two columns. The pilot moves under the deck name; the cards / Edit buttons get their own line. */
 @media (max-width: 560px) {
   .pilot-col { display: none; }
-  td.player small { display: flex; margin-left: 0; margin-top: 4px; }
-  .pilot-inline { display: inline; font-style: normal; font-size: 15px; color: var(--ink-soft); }
-  .deck-acts { display: flex; margin: 8px 0 0; }
+  /* Each deck is two lines: name and colors, then pilot with the cards / Edit buttons */
+  #decks td.player { font-size: 17px; }
+  #decks td.player small { display: inline-flex; margin-left: 6px; margin-top: 0; vertical-align: 1px; }
+  #decks td.player .pip { width: 15px; height: 15px; }
+  #decks td.player .pip.sm { width: 11px; height: 11px; }
+  .pilot-inline { display: inline; font-weight: 400; font-size: 15px; color: var(--ink-soft); margin-right: 2px; }
+  .deck-acts { display: flex; align-items: center; margin: 6px 0 0; }
   #decks td { padding: 12px 6px; }
   #decks th { padding: 6px; }
   #decks .decks-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
@@ -646,8 +650,9 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
       const tr = el("tr"); tr.dataset.key = dk.key;
       const deck = el("td", "player"); deck.append(dk.name || "Untitled deck");
       const sub = el("small"); const pp = pips(dk.colors, dk.splash); pp.title = colorName(dk); pp.setAttribute("role", "img"); pp.setAttribute("aria-label", colorName(dk));
-      sub.append(pp, el("span", "pilot-inline", dk.pilot));   // the pilot shows here on phones, where the Pilot column is hidden
+      sub.append(pp);
       const acts = el("span", "deck-acts");
+      acts.append(el("span", "pilot-inline", dk.pilot));   // the pilot shows here on phones, where the Pilot column is hidden
       deck.append(sub, acts);
       let xbtn = null;
       if (dk.cards.length || dk.sideboard.length) { xbtn = el("button", "xbtn", dk.cards.length + " cards"); xbtn.type = "button"; acts.append(xbtn); }
