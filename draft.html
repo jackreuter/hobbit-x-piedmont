@@ -62,8 +62,17 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
 .card { position: relative; min-width: 0; }
 .card img { width: 100%; aspect-ratio: 488/680; border-radius: 5%; display: block; background: var(--rule); }
 .card.unsure img { outline: 3px dashed var(--gold); outline-offset: 2px; }
-.card .x, .card .mv { position: absolute; top: 4px; right: 4px; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: rgba(43,36,24,.8); color: #fff; border: 0; font: 700 18px/30px var(--label); }
-.card .mv { right: auto; left: 4px; font-size: 16px; }
+.card { cursor: pointer; }
+.card img { transition: transform .12s ease; }
+.card:active img { transform: scale(.97); }
+/* Tapping a card opens it with Move / Remove; it stays up until you tap outside */
+.card-sheet { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(30, 22, 12, .55); touch-action: none; }
+.sheet-box { width: min(320px, 84vw, calc((100dvh - 150px) * .7176)); display: flex; flex-direction: column; gap: 8px; }
+.sheet-box img { width: 100%; aspect-ratio: 488 / 680; border-radius: 4.75% / 3.5%; box-shadow: 0 12px 32px rgba(0,0,0,.45); display: block; background: var(--rule); }
+.sheet-box .note { background: var(--page); border: 1px solid var(--rule); border-radius: 4px; padding: 6px 10px; font: italic .9rem var(--body); color: var(--ink-soft); }
+.sheet-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.sheet-btns button { padding: 10px 6px; font-size: .95rem; background: var(--page); border-color: var(--rule); }
+.sheet-btns .rm { color: var(--red); }
 .card .read { font: .78rem/1.25 var(--label); color: var(--gold); margin-top: 3px; overflow-wrap: anywhere; }
 .card .cutnote { font: .78rem var(--label); color: var(--red); }
 .empty { border: 1px dashed var(--rule); border-radius: 6px; padding: 18px; text-align: center; color: var(--ink-soft); font-style: italic; margin-top: 14px; }
@@ -160,6 +169,13 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
       <button class="danger" id="delete" type="button" hidden>Delete</button>
     </div></div>
   </form>
+  <div class="card-sheet" id="sheet" role="dialog" aria-modal="true" hidden>
+    <div class="sheet-box">
+      <img id="sheet-img" alt="">
+      <div class="note" id="sheet-note" hidden></div>
+      <div class="sheet-btns"><button type="button" id="sheet-move"></button><button type="button" class="rm" id="sheet-remove">Remove</button></div>
+    </div>
+  </div>
 </main>
 <script>
 (() => {
@@ -290,17 +306,15 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
   });
 
   function renderPile(p) {
-    const pile = piles[p], $p = id => $(p + "-" + id), to = other(p);
+    const pile = piles[p], $p = id => $(p + "-" + id);
     const list = [...pile.picked.values()].sort((a, b) => a.sure - b.sure || a.card.name.localeCompare(b.card.name));
     $p("grid").replaceChildren(...list.map(c => {
       const d = el("div", "card" + (c.sure ? "" : " unsure")), img = el("img");
       img.src = c.card.img; img.alt = c.card.name; img.title = c.card.name; img.loading = "lazy";
-      const x = el("button", "x", "×"); x.type = "button"; x.setAttribute("aria-label", "Remove " + c.card.name);
-      x.addEventListener("click", () => { pile.picked.delete(c.card.id); dirty = true; renderPile(p); });
-      const mv = el("button", "mv", "⇄"); mv.type = "button"; mv.setAttribute("aria-label", "Move " + c.card.name + " to the " + piles[to].name);
-      mv.title = "Move to the " + piles[to].name;
-      mv.addEventListener("click", () => { pile.picked.delete(c.card.id); piles[to].picked.set(c.card.id, { ...c, sure: true, read: "" }); dirty = true; renderPile(p); renderPile(to); });
-      d.append(img, x, mv);
+      d.tabIndex = 0; d.setAttribute("role", "button"); d.setAttribute("aria-label", c.card.name + ": move or remove");
+      d.addEventListener("click", () => openCard(p, c.card.id));
+      d.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCard(p, c.card.id); } });
+      d.append(img);
       if (!c.sure) d.append(el("div", "read", "read as “" + c.read + "”"));
       if (c.card.cut) d.append(el("div", "cutnote", "not in current cube"));
       return d;
@@ -318,6 +332,32 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
     if (pile.unread.length) $p("add").open = true;
     renderColors();
   }
+
+  // The opened card: move it to the other pile or remove it
+  let opened = null;
+  function openCard(p, id) {
+    const c = piles[p].picked.get(id); if (!c) return;
+    opened = { p, id };
+    $("sheet-img").src = c.card.img; $("sheet-img").alt = c.card.name; $("sheet").setAttribute("aria-label", c.card.name);
+    const notes = [];
+    if (!c.sure) notes.push("Read from the photo as “" + c.read + "”");
+    if (c.card.cut) notes.push("Not in the current cube");
+    $("sheet-note").textContent = notes.join(". "); $("sheet-note").hidden = !notes.length;
+    $("sheet-move").textContent = "Move to " + (p === "m" ? "sideboard" : "main deck");
+    $("sheet").hidden = false;
+  }
+  const closeCard = () => { $("sheet").hidden = true; opened = null; };
+  $("sheet").addEventListener("click", e => { if (e.target === $("sheet")) closeCard(); });
+  addEventListener("keydown", e => { if (e.key === "Escape" && opened) closeCard(); });
+  $("sheet-move").addEventListener("click", () => {
+    const { p, id } = opened, to = other(p), c = piles[p].picked.get(id);
+    piles[p].picked.delete(id); piles[to].picked.set(id, { ...c, sure: true, read: "" });
+    dirty = true; closeCard(); renderPile(p); renderPile(to);
+  });
+  $("sheet-remove").addEventListener("click", () => {
+    const { p, id } = opened;
+    piles[p].picked.delete(id); dirty = true; closeCard(); renderPile(p);
+  });
 
   function suggest(p) {
     const pile = piles[p], $p = id => $(p + "-" + id), to = other(p);

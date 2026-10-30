@@ -79,7 +79,12 @@ td.player small { display: inline-flex; vertical-align: 2px; margin-left: 12px; 
 .xbtn[aria-expanded]::after { content: " ▾"; }
 a.xbtn { text-decoration: none; display: inline-block; }
 .deck-tools { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
-.xbtn.add { font-size: 13px; padding: 4px 12px; color: var(--ink); border-color: color-mix(in srgb, var(--ink) 40%, transparent); }
+.add-deck { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); color: var(--ink); text-decoration: none; font: 700 22px/1 var(--label); background: color-mix(in srgb, var(--page) 35%, transparent); }
+.add-deck:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
+.decks-head { flex-wrap: wrap; align-items: center; row-gap: 4px; }
+.decks-head .deck-tools { flex-wrap: nowrap; min-width: 0; }
+.deck-status { flex-basis: 100%; text-align: right; font-size: 14px !important; }
+.deck-status:empty { display: none; }
 .draft-pick { font-family: var(--label); font-size: 14px; color: var(--ink); background: color-mix(in srgb, var(--page) 60%, transparent); border: 1px solid var(--rule); border-radius: 999px; padding: 4px 10px; max-width: 100%; }
 .draft-pick:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
 .deck-acts { display: inline-flex; gap: 8px; margin-left: 10px; vertical-align: 2px; font-weight: 400; }
@@ -92,6 +97,19 @@ a.xbtn { text-decoration: none; display: inline-block; }
   .deck-acts { display: flex; margin: 8px 0 0; }
   #decks td { padding: 12px 6px; }
   #decks th { padding: 6px; }
+  #decks .decks-head { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 8px; }
+  #decks .deck-tools { justify-self: end; max-width: 100%; }
+  #decks .draft-pick { min-width: 0; flex: 0 1 auto; }
+  #decks .deck-status { grid-column: 1 / -1; }
+  .draft-pick { font-size: 13px; padding: 4px 6px; }
+  .deck-tools { gap: 8px; }
+  #decks tr.rec-row td { padding: 0 6px 12px; }
+  #decks .rec-edit { flex-wrap: nowrap; gap: 10px; }
+  #decks .step { gap: 4px; }
+  #decks .step-btn { width: 30px; height: 30px; font-size: 16px; }
+  #decks .step-n { min-width: 1.3em; font-size: 16px; }
+  #decks .lbl-long { display: none; }
+  #decks .lbl-short { display: inline; font-weight: 700; margin-right: 2px; }
 }
 td.loading-row { text-align: center; font-family: var(--fell); font-style: italic; color: var(--ink-soft); padding: 28px 10px; }
 .rec-btn { font: inherit; background: none; border: 0; padding: 4px 0; cursor: pointer; border-bottom: 1px dotted color-mix(in srgb, var(--ink-soft) 60%, transparent); }
@@ -102,6 +120,7 @@ tr.rec-row td { padding: 0 10px 14px; border-bottom: 1px dotted var(--rule); }
 .step-btn { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--rule); background: var(--page); color: var(--ink); font: 700 18px/1 var(--label); cursor: pointer; }
 .step-n { min-width: 1.6em; text-align: center; font: 700 18px var(--body); color: var(--ink); }
 tr.has-rec td { border-bottom-color: transparent; }
+.lbl-short { display: none; }
 .xbtn[aria-expanded="true"]::after { content: " ▴"; }
 .xbtn:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
 tr.open td { border-bottom-color: transparent; }
@@ -246,7 +265,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   </header>
 
   <section id="decks">
-    <div class="section-head"><h2>Decks</h2><span class="deck-tools"><span class="note" id="deck-status" aria-live="polite"></span><select class="draft-pick" id="draft-pick" aria-label="Draft" hidden></select><a class="xbtn add" id="add-deck" href="draft.html">Add deck</a></span></div>
+    <div class="section-head decks-head"><h2>Decks</h2><span class="deck-tools"><select class="draft-pick" id="draft-pick" aria-label="Draft" hidden></select><a class="add-deck" id="add-deck" href="draft.html" aria-label="Add deck" title="Add deck">+</a></span><span class="note deck-status" id="deck-status" aria-live="polite"></span></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Name</th><th class="pilot-col">Pilot</th><th class="num">Record</th></tr></thead>
@@ -671,7 +690,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
             if (saveRecord) saveRecord(dk);
           };
           minus.addEventListener("click", () => bump(-1)); plus.addEventListener("click", () => bump(1));
-          g.append(label, minus, n, plus); box.append(g);
+          g.append(el("span", "lbl-long", label), el("span", "lbl-short", label[0]), minus, n, plus); box.append(g);
         });
         const done = el("button", "xbtn", "Done"); done.type = "button";
         done.addEventListener("click", () => { openRecs.delete(dk.key); renderStandings(); pullDecks(); });
