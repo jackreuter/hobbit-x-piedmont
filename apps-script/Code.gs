@@ -154,25 +154,35 @@ function read_() {
   return s;
 }
 
+// Decks tab: one row per deck. A draft is every deck that shares a Date.
+// Colors / Splash are letters like "U R"; Cards (main deck) and Sideboard are card ids separated by spaces.
+const DECK_COLS = ["Key", "Deck", "Pilot", "Wins", "Losses", "Updated", "Date", "Colors", "Splash", "Cards", "Sideboard"];
+const ID = /^[a-z0-9-]{1,40}$/;
+
 function deckTab_(ss) {
   let t = ss.getSheetByName(DECKS);
   if (!t) {
     t = ss.insertSheet(DECKS);
-    t.appendRow(["Key", "Deck", "Pilot", "Wins", "Losses", "Updated", "Date"]);
+    t.appendRow(DECK_COLS);
     t.setFrozenRows(1);
-    t.getRange("A1:G1").setFontWeight("bold");
     t.setColumnWidth(2, 240);
   }
-  if (String(t.getRange(1, 7).getValue()) !== "Date") {
-    t.getRange(1, 7).setValue("Date").setFontWeight("bold");
-  }
+  const head = t.getRange(1, 1, 1, DECK_COLS.length);
+  if (head.getValues()[0].join("|") !== DECK_COLS.join("|")) head.setValues([DECK_COLS]).setFontWeight("bold");
   return t;
 }
+
+function letters_(v) {
+  return String(v || "").toUpperCase().split(/[^WUBRG]+/).join("").split("").filter((c, i, a) => a.indexOf(c) === i);
+}
+
+const ids_ = v => String(v || "").split(/\s+/).filter(x => ID.test(x));
+const idList_ = a => a.map(String).filter(x => ID.test(x)).slice(0, 200).join(" ");
 
 function readDecks_(ss) {
   const t = deckTab_(ss);
   const n = t.getLastRow() - 1;
-  const rows = n > 0 ? t.getRange(2, 1, n, 7).getValues() : [];
+  const rows = n > 0 ? t.getRange(2, 1, n, DECK_COLS.length).getValues() : [];
   const out = {};
   rows.forEach(r => {
     const key = String(r[0]).trim();
@@ -180,7 +190,12 @@ function readDecks_(ss) {
     const w = parseInt(r[3], 10), l = parseInt(r[4], 10);
     const dv = r[6];
     const date = dv instanceof Date ? Utilities.formatDate(dv, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dv || "").trim().replace(/^'/, "");
-    out[key] = { name: String(r[1]), pilot: String(r[2]), w: isNaN(w) ? null : w, l: isNaN(l) ? null : l, date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "" };
+    out[key] = {
+      name: String(r[1]), pilot: String(r[2]), w: isNaN(w) ? null : w, l: isNaN(l) ? null : l,
+      date: /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "",
+      colors: letters_(r[7]), splash: letters_(r[8]),
+      cards: ids_(r[9]), sideboard: ids_(r[10])
+    };
   });
   return out;
 }
@@ -193,23 +208,61 @@ function state_() {
   return s;
 }
 
+// Row number (2+) of a deck in the Decks tab, or -1
+function findDeck_(t, key) {
+  const n = t.getLastRow() - 1;
+  if (n <= 0) return -1;
+  const keys = t.getRange(2, 1, n, 1).getValues();
+  for (let i = 0; i < keys.length; i++) if (String(keys[i][0]).trim() === key) return i + 2;
+  return -1;
+}
+
+const num_ = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : Math.max(0, Math.min(99, n)); };
+
+// Create or replace a deck. Requests without a cards list (older pages) keep the saved colors and cards.
 function saveDeck_(op) {
   const key = String(op.key || "");
-  if (!/^[a-z0-9-]{1,40}$/.test(key)) return json_({ error: "bad request" });
-  const num = v => { const n = parseInt(v, 10); return isNaN(n) ? 0 : Math.max(0, Math.min(99, n)); };
+  if (!ID.test(key)) return json_({ error: "bad request" });
   const ss = book_();
   const t = deckTab_(ss);
+  const found = findDeck_(t, key);
+  const old = found > 0 ? t.getRange(found, 1, 1, DECK_COLS.length).getValues()[0] : [];
   const date = /^\d{4}-\d{2}-\d{2}$/.test(String(op.date || "")) ? "'" + op.date : "";
-  const row = [key, safe_(String(op.name || "").slice(0, 40)), safe_(String(op.pilot || "").slice(0, 20)), num(op.w), num(op.l), new Date(), date];
-  const n = t.getLastRow() - 1;
-  let found = -1;
-  if (n > 0) {
-    const keys = t.getRange(2, 1, n, 1).getValues();
-    for (let i = 0; i < keys.length; i++) if (String(keys[i][0]).trim() === key) { found = i + 2; break; }
-  }
-  if (found > 0) t.getRange(found, 1, 1, 7).setValues([row]);
+  const full = Array.isArray(op.cards);
+  const cards = full ? idList_(op.cards) : (old[9] || "");
+  const side = full ? idList_(Array.isArray(op.sideboard) ? op.sideboard : []) : (old[10] || "");
+  const row = [key, safe_(String(op.name || "").slice(0, 40)), safe_(String(op.pilot || "").slice(0, 20)), num_(op.w), num_(op.l), new Date(), date,
+    full ? letters_(op.colors).join(" ") : (old[7] || ""), full ? letters_(op.splash).join(" ") : (old[8] || ""), cards, side];
+  if (found > 0) t.getRange(found, 1, 1, DECK_COLS.length).setValues([row]);
   else t.appendRow(row);
-  ss.getSheetByName(LOG).appendRow([new Date(), "Deck edited: " + row[1] + " (" + row[2] + ") " + row[3] + "-" + row[4], "", key]);
+  ss.getSheetByName(LOG).appendRow([new Date(), (found > 0 ? "Deck edited: " : "Deck added: ") + row[1] + " (" + row[2] + ") " + row[3] + "-" + row[4], "", key]);
+  return json_(state_());
+}
+
+// Just the win / loss record, from the steppers on the main page
+function saveRecord_(op) {
+  const key = String(op.key || "");
+  if (!ID.test(key)) return json_({ error: "bad request" });
+  const ss = book_();
+  const t = deckTab_(ss);
+  const found = findDeck_(t, key);
+  if (found < 0) return json_({ error: "no such deck" });
+  t.getRange(found, 4, 1, 3).setValues([[num_(op.w), num_(op.l), new Date()]]);
+  ss.getSheetByName(LOG).appendRow([new Date(), "Record: " + t.getRange(found, 2).getValue() + " " + num_(op.w) + "-" + num_(op.l), "", key]);
+  return json_(state_());
+}
+
+function deleteDeck_(op) {
+  const key = String(op.key || "");
+  if (!ID.test(key)) return json_({ error: "bad request" });
+  const ss = book_();
+  const t = deckTab_(ss);
+  const found = findDeck_(t, key);
+  if (found > 0) {
+    const r = t.getRange(found, 1, 1, DECK_COLS.length).getValues()[0];
+    t.deleteRow(found);
+    ss.getSheetByName(LOG).appendRow([new Date(), "Deck deleted: " + r[1] + " (" + r[2] + ") " + r[6] + " cards: " + r[9] + " sideboard: " + r[10], "", key]);
+  }
   return json_(state_());
 }
 
@@ -234,9 +287,11 @@ function doPost(e) {
   try {
     const op = JSON.parse(e.postData.contents);
     if (op.type === "deck") return saveDeck_(op);
+    if (op.type === "record") return saveRecord_(op);
+    if (op.type === "deleteDeck") return deleteDeck_(op);
     const id = String(op.id || "");
     const tier = op.tier;
-    if (!/^[a-z0-9-]{1,40}$/.test(id) || (tier !== "top" && tier !== "bottom" && tier !== null)) {
+    if (!ID.test(id) || (tier !== "top" && tier !== "bottom" && tier !== null)) {
       return json_({ error: "bad request" });
     }
     const name = safe_(op.name || NAMES_[id] || "");
