@@ -160,7 +160,7 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
 
     <h2>Colors</h2>
     <div class="colors" id="colors"></div>
-    <p class="sub" style="margin-top:8px">From the main deck: a color with 4 or more cards is a main color, 1–3 cards is a splash.</p>
+    <p class="sub" style="margin-top:8px">From the main deck's mana costs: a color with 4 or more cards is a main color, 1–3 cards is a splash. Hybrid costs count toward the colors the deck already plays.</p>
 
     <div class="actions"><div class="inner">
       <button class="primary" id="save" type="submit" disabled>Save deck</button>
@@ -379,11 +379,34 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
   }
 
   // ---- Colors ----
-  // From the main deck: 4+ cards of a color makes it a main color, 1-3 a splash (lands don't count,
-  // gold cards count for each color). If no color reaches 4, every color present counts as main.
+  // From the main deck: 4+ cards needing a color makes it a main color, 1-3 a splash. A card needs the colors
+  // in its mana cost (front face). A hybrid symbol like {R/G} is paid with a color the card already needs, or
+  // else the one the deck plays most. Phyrexian and {2/W}-style symbols don't need a color. Lands don't count.
+  // If no color reaches 4, every color present counts as main.
   function deckColors() {
     const n = {}; COLORS.forEach(c => n[c] = 0);
-    piles.m.picked.forEach(p => { if (!p.card.land) [...p.card.ci].forEach(c => { if (c in n) n[c]++; }); });
+    const hybrids = [];
+    piles.m.picked.forEach(p => {
+      if (p.card.land) return;
+      if (p.card.cost == null) { [...p.card.ci].forEach(c => { if (c in n) n[c]++; }); return; }   // no cost on file
+      const need = new Set(), choices = [];
+      (p.card.cost.match(/\{[^}]+\}/g) || []).forEach(sym => {
+        const parts = sym.slice(1, -1).split("/"), cs = parts.filter(x => COLORS.includes(x));
+        if (parts.includes("P")) return;
+        if (parts.length === 1 && cs.length === 1) need.add(cs[0]);
+        else if (cs.length > 1) choices.push(cs);
+      });
+      need.forEach(c => n[c]++);
+      if (choices.length) hybrids.push({ need, choices });
+    });
+    hybrids.forEach(({ need, choices }) => {
+      const add = new Set();
+      choices.forEach(cs => {
+        if (cs.some(c => need.has(c) || add.has(c))) return;
+        add.add(cs.reduce((a, b) => n[b] > n[a] ? b : a));
+      });
+      add.forEach(c => n[c]++);
+    });
     const present = COLORS.filter(c => n[c] > 0), main = present.filter(c => n[c] >= 4);
     return main.length ? { colors: main, splash: present.filter(c => n[c] < 4) } : { colors: present, splash: [] };
   }

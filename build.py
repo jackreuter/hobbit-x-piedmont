@@ -1,6 +1,7 @@
 """Build index.html (GitHub Pages) from src/page.html.
 Usage: python build.py
 Embeds the cube and the catalog of older cards (with Scryfall image URLs) and wraps the page in a document.
+Also writes cards.json (the cards the deck form can match, with mana costs from data/mana-costs.json).
 """
 import json, re, sys, os
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -22,4 +23,15 @@ doc = ('<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
        '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
        '<style>' + reset + '</style>\n</head>\n<body>\n' + t + '\n</body>\n</html>\n')
 open(P('index.html'), 'w').write(doc)
+
+# cards.json for the deck form: every card it can match, with the front face's mana cost
+costs = json.load(open(P('data', 'mana-costs.json')))
+form_cards = []
+for c in cube + extra:
+    o = {'id': c['id'], 'name': c['name'], 'ci': ''.join(c.get('ci', [])), 'img': c['img']}
+    if c.get('land'): o['land'] = 1
+    if c['id'] not in cube_ids: o['cut'] = 1
+    if c['id'] in costs: o['cost'] = costs[c['id']]
+    form_cards.append(o)
+open(P('cards.json'), 'w').write(json.dumps(form_cards, ensure_ascii=False, separators=(',', ':')))
 print('built', len(doc) // 1024, 'KB')

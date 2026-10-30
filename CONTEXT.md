@@ -49,7 +49,8 @@ Script validation: ids/keys match `^[a-z0-9-]{1,40}$`; text cells that start wit
 |---|---|
 | `index.html` | Built, deployable page (current). |
 | `src/page.html` | Source page, including the Apps Script sync code (API URL hard-coded). Draft I data in `<script id="ledger">` (now only a fallback; the sheet is the source), cube in `<script id="cube">`, older cut cards in `<script id="catalog">`. Rackham art and mana symbols are inlined as data URIs. |
-| `build.py` | `python3 build.py` → `index.html`. Embeds the cube and catalog with Scryfall image URLs and wraps the page in a document. |
+| `build.py` | `python3 build.py` → `index.html` and `cards.json`. Embeds the cube and catalog with Scryfall image URLs and wraps the page in a document; `cards.json` is the deck form's card list with mana costs. |
+| `data/mana-costs.json` | Front-face mana cost for every cube and catalog card (from Scryfall). Add new cards here when the cube changes. |
 | `apps-script/Code.gs` | Google Apps Script backend. |
 | `data/cube-current.json` | Current cube, 371 cards (version 2026-10-16). Fields: id, name, ci (color identity), land?, img?. |
 | `data/cube-2026-10-12.json` | The cube as drafted in Draft I (370 cards). |
@@ -86,7 +87,7 @@ Draft I card lists and colors were copied into the sheet on 2026-10-29. Each dec
 
 - Site: edit `src/page.html`, run `python3 build.py`, commit `index.html`, push to `main`.
 - Apps Script: `apps-script/` is linked with clasp. `clasp push --force`, then `clasp create-deployment --deploymentId <live id>` (keeps the URL). Permissions are listed in `apps-script/appsscript.json`; adding one needs the owner to run an authorize function in the editor.
-- `draft.html` + `cards.json`: deck form (add / edit / delete). Draft (existing or new date), pilot, name, record, then Main Deck and Sideboard piles filled from photos (Drive OCR, fuzzy-matched to card names; basic lands skipped) or by name. × removes, ⇄ moves between piles. Colors are read-only from the main deck: 4+ cards of a color = main, 1–3 = splash. `cards.json` is the cube + catalog; regenerate it when the cube data changes.
+- `draft.html` + `cards.json`: deck form (add / edit / delete). Draft (existing or new date), pilot, name, record, then Main Deck and Sideboard piles filled from photos (Drive OCR, fuzzy-matched to card names; basic lands skipped) or by name. × removes, ⇄ moves between piles. Colors are read-only, from the main deck's mana costs (front face): 4+ cards needing a color = main, 1–3 = splash; hybrid symbols go to a color the deck already plays; Phyrexian and {2/W} symbols don't count. `cards.json` (cube + catalog + costs from `data/mana-costs.json`) is written by `build.py`.
 
 ## Design decisions and owner preferences
 
