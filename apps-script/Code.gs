@@ -275,7 +275,9 @@ function safe_(text) {
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
 
-function doGet() {
+function doGet(e) {
+  const at = e && e.parameter && e.parameter.cubeAt;
+  if (at) return json_(/^\d{4}-\d{2}-\d{2}$/.test(at) ? cubeAt_(at) : { error: "bad request" });
   return json_(state_());
 }
 
@@ -354,6 +356,16 @@ function cubeRows_(sh) {
 function readCube_(ss) {
   const t = latestCubeTab_(ss);
   return t ? { version: t.date, cards: cubeRows_(t.sheet) } : null;
+}
+
+// For the cube form: every version's date, the version saved on this date (if any) and the one before it
+function cubeAt_(date) {
+  const tabs = [];
+  book_().getSheets().forEach(sh => { const m = sh.getName().match(CUBE_TAB); if (m) tabs.push({ date: m[1], sheet: sh }); });
+  tabs.sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+  const at = tabs.filter(t => t.date === date)[0], before = tabs.filter(t => t.date < date).pop();
+  const pack = t => t ? { version: t.date, cards: cubeRows_(t.sheet) } : null;
+  return { versions: tabs.map(t => t.date), at: pack(at), before: pack(before) };
 }
 
 // Save a whole cube version from the cube form: { type: "cube", version: "YYYY-MM-DD", cards: [{ name, set, num, ci, cost, land, img }] }

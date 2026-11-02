@@ -223,22 +223,44 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
     all.list = d.data;
   });
 
-  // ---- The current cube (from the sheet), with details from cards.json or the sheet itself ----
-  let current = [], cube = null, latest = "";
+  // ---- The cube this update starts from: the newest version before the chosen date ----
+  // Details come from the sheet, or cards.json for older tabs that only have names.
+  let current = [], cube = null, latest = "", editing = null, loaded = null;
   const cubeHas = name => current.some(c => norm(c.name) === norm(name) || norm(c.name.split(" // ")[0]) === norm(name));
-  const loaded = Promise.all([fetch("cards.json").then(r => r.json()), fetch(API).then(r => r.json())]).then(([known, state]) => {
-    const byId = new Map(known.map(c => [c.id, c])), byName = new Map(known.map(c => [norm(c.name), c]));
-    latest = state.cube ? state.cube.version : "";
-    current = (state.cube ? state.cube.cards : known.filter(c => !c.cut)).map(r => {
-      const id = r.set && r.num ? (r.set + "-" + r.num).toLowerCase() : "";
-      const k = byId.get(id) || byName.get(norm(r.name)) || {};
-      const c = { id: id || k.id || "", name: r.name, set: r.set || (k.id || "").split("-")[0], num: r.num || (k.id || "").split("-").slice(1).join("-"),
-        ci: r.ci || (k.ci ? [...k.ci] : null), cost: r.cost != null ? r.cost : k.cost, land: r.land || !!k.land, img: r.img || k.img };
-      if (!c.img) c.img = c.set && c.num ? `${SCRYFALL}/cards/${c.set}/${c.num}?format=image&version=normal` : `${SCRYFALL}/cards/named?exact=${encodeURIComponent(c.name)}&format=image&version=normal`;
-      return c;
-    });
-    cube = index(current, c => c.name);
+  let known = null;
+  const knownReady = fetch("cards.json").then(r => r.json()).then(list => {
+    known = { list, byId: new Map(list.map(c => [c.id, c])), byName: new Map(list.map(c => [norm(c.name), c])) };
   });
+  const detailed = r => {
+    const id = r.set && r.num ? (r.set + "-" + r.num).toLowerCase() : "";
+    const k = known.byId.get(id) || known.byName.get(norm(r.name)) || {};
+    const c = { id: id || k.id || "", name: r.name, set: r.set || (k.id || "").split("-")[0], num: r.num || (k.id || "").split("-").slice(1).join("-"),
+      ci: r.ci || (k.ci ? [...k.ci] : null), cost: r.cost != null ? r.cost : k.cost, land: r.land || !!k.land, img: r.img || k.img };
+    if (!c.img) c.img = c.set && c.num ? `${SCRYFALL}/cards/${c.set}/${c.num}?format=image&version=normal` : `${SCRYFALL}/cards/named?exact=${encodeURIComponent(c.name)}&format=image&version=normal`;
+    return c;
+  };
+  // Load the starting cube for a date. If an update was already saved on that date, its changes fill the two lists.
+  function loadDate(date) {
+    $("save").disabled = true; $("load-status").hidden = false; $("load-status").classList.remove("err"); $("load-status").textContent = "Loading…";
+    Object.values(lists).forEach(L => { L.picked = new Map(); L.unread = []; if (L.dupes) L.dupes = []; });
+    $("r-photos").replaceChildren(); $("a-photos").replaceChildren();
+    loaded = Promise.all([knownReady, fetch(API + "?cubeAt=" + date).then(r => r.json())]).then(([, d]) => {
+      if (!d || d.error) throw new Error((d && d.error) || "no answer");
+      latest = d.versions[d.versions.length - 1] || "";
+      current = d.before ? d.before.cards.map(detailed) : d.versions.length ? [] : known.list.filter(c => !c.cut).map(detailed);
+      cube = index(current, c => c.name);
+      editing = d.at ? d.at.version : null;
+      if (d.at) {
+        const saved = d.at.cards.map(detailed), inSaved = new Set(saved.map(c => norm(c.name))), inBase = new Set(current.map(c => norm(c.name)));
+        current.filter(c => !inSaved.has(norm(c.name))).forEach(c => lists.r.picked.set(c.id || c.name, { card: c, sure: true, read: "" }));
+        saved.filter(c => !inBase.has(norm(c.name))).forEach(c => lists.a.picked.set(c.name, { card: c, sure: true, read: "" }));
+      }
+      const base = d.before ? "version " + shortDate(d.before.version) + " · " + current.length + " cards" : current.length + " cards";
+      $("load-status").textContent = editing ? "Editing the " + shortDate(editing) + " update, which changed " + base + "." : "Current " + base + ".";
+      render("r"); render("a"); dirty = false; $("save").disabled = false;
+    }).catch(err => { $("load-status").textContent = "Couldn't load the cube (" + err.message + "). Check your connection and refresh."; $("load-status").classList.add("err"); });
+    return loaded;
+  }
 
   // ---- Two lists: cards coming out (from the cube) and cards going in (any card) ----
   const lists = { r: { name: "removals", picked: new Map(), unread: [] }, a: { name: "additions", picked: new Map(), unread: [], dupes: [] } };
@@ -401,12 +423,17 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
   $("sheet-remove").addEventListener("click", () => { const { p, key } = opened; lists[p].picked.delete(key); dirty = true; closeCard(); render(p); });
 
   // ---- Load ----
-  $("f-date").value = today();
+  let shownDate = today();
+  $("f-date").value = shownDate;
   render("r"); render("a");
-  loaded.then(() => {
-    $("load-status").textContent = latest ? "Current version " + shortDate(latest) + " · " + current.length + " cards." : current.length + " cards.";
-    $("save").disabled = false; renderSummary();
-  }).catch(() => { $("load-status").textContent = "Couldn't load the cube. Check your connection and refresh."; $("load-status").classList.add("err"); });
+  loadDate(shownDate);
+  // Picking another date loads that date's update (or a fresh one), so ask before dropping unsaved changes
+  $("f-date").addEventListener("change", () => {
+    const d = $("f-date").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d === shownDate) return;
+    if (dirty && !confirm("Drop your changes and load " + shortDate(d) + "?")) { $("f-date").value = shownDate; return; }
+    shownDate = d; loadDate(d);
+  });
   namesReady.catch(() => { $("a-unread-wrap").hidden = false; $("a-unread").replaceChildren(el("span", null, "Couldn't reach Scryfall, so additions can't be matched. Try refreshing.")); });
 
   // ---- Save: the current cube minus removals plus additions, as a new dated tab ----
@@ -416,8 +443,8 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
     const version = $("f-date").value;
     if (!/^\d{4}-\d{2}-\d{2}$/.test(version)) { say("Pick the version's date.", true); return; }
     if (!lists.r.picked.size && !lists.a.picked.size) { say("Nothing to change yet.", true); return; }
-    if (version === latest && !confirm("This replaces the " + shortDate(version) + " version. Continue?")) return;
-    if (version < latest && !confirm("The newest version is " + shortDate(latest) + ", so a " + shortDate(version) + " version won't be the one shown. Save anyway?")) return;
+    if (version !== shownDate) { say("Still loading that date. Try again in a moment.", true); return; }
+    if (!editing && version < latest && !confirm("The newest version is " + shortDate(latest) + ", so a " + shortDate(version) + " version won't be the one shown. Save anyway?")) return;
     $("save").disabled = true; say("Saving…");
     try {
       const out = new Set([...lists.r.picked.values()].map(x => norm(x.card.name)));
