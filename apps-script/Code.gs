@@ -289,6 +289,7 @@ function doPost(e) {
     if (op.type === "deck") return saveDeck_(op);
     if (op.type === "record") return saveRecord_(op);
     if (op.type === "deleteDeck") return deleteDeck_(op);
+    if (op.type === "cube") return saveCube_(op);
     const id = String(op.id || "");
     const tier = op.tier;
     if (!ID.test(id) || (tier !== "top" && tier !== "bottom" && tier !== null)) {
@@ -315,19 +316,24 @@ function doPost(e) {
 
 // ---- Cube versions ----------------------------------------------------------
 // Each version of the cube is its own tab named "Cube YYYY-MM-DD". The page always shows the newest one.
-// Columns: Name | Set | Number. Name alone is enough for a new card (Set and Number pick a specific printing).
-// To make a new version: duplicate the latest tab, rename it with the new date, then add or delete rows.
+// Columns: Name | Set | Number | Colors | Cost | Land | Image. Name alone is enough for a card added by hand
+// (Set and Number pick a printing). The cube form fills in the rest from Scryfall, so pages don't have to look cards up.
 const CUBE_TAB = /^Cube (\d{4}-\d{2}-\d{2})$/;
+const CUBE_COLS = ["Name", "Set", "Number", "Colors", "Cost", "Land", "Image"];
 
-function readCube_(ss) {
+function latestCubeTab_(ss) {
   let best = null, bestDate = "";
   ss.getSheets().forEach(sh => {
     const m = sh.getName().match(CUBE_TAB);
     if (m && m[1] > bestDate) { bestDate = m[1]; best = sh; }
   });
-  if (!best) return null;
-  const n = best.getLastRow() - 1;
-  const rows = n > 0 ? best.getRange(2, 1, n, 3).getDisplayValues() : [];
+  return best ? { sheet: best, date: bestDate } : null;
+}
+
+function cubeRows_(sh) {
+  const n = sh.getLastRow() - 1;
+  const w = Math.min(CUBE_COLS.length, sh.getMaxColumns());
+  const rows = n > 0 ? sh.getRange(2, 1, n, w).getDisplayValues() : [];
   const cards = [], seen = {};
   rows.forEach(r => {
     const name = String(r[0]).trim();
@@ -335,9 +341,53 @@ function readCube_(ss) {
     const key = name.toLowerCase();
     if (seen[key]) return;          // each card appears once
     seen[key] = true;
-    cards.push({ name: name, set: String(r[1]).trim().toLowerCase(), num: String(r[2]).trim() });
+    const c = { name: name, set: String(r[1] || "").trim().toLowerCase(), num: String(r[2] || "").trim() };
+    if (r[3]) c.ci = letters_(r[3]);
+    if (r[4]) c.cost = String(r[4]).trim().replace(/^'/, "");
+    if (/^(land|true|yes)$/i.test(String(r[5] || "").trim())) c.land = true;
+    if (/^https:\/\/cards\.scryfall\.io\//.test(String(r[6] || ""))) c.img = String(r[6]).trim();
+    cards.push(c);
   });
-  return { version: bestDate, cards: cards };
+  return cards;
+}
+
+function readCube_(ss) {
+  const t = latestCubeTab_(ss);
+  return t ? { version: t.date, cards: cubeRows_(t.sheet) } : null;
+}
+
+// Save a whole cube version from the cube form: { type: "cube", version: "YYYY-MM-DD", cards: [{ name, set, num, ci, cost, land, img }] }
+function saveCube_(op) {
+  const version = String(op.version || "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(version) || !Array.isArray(op.cards) || !op.cards.length || op.cards.length > 1000) return json_({ error: "bad request" });
+  const rows = [], seen = {};
+  op.cards.forEach(c => {
+    const name = String(c && c.name || "").trim().slice(0, 150);
+    if (!name || seen[name.toLowerCase()]) return;
+    seen[name.toLowerCase()] = true;
+    const set = /^[a-z0-9]{2,8}$/.test(String(c.set || "")) ? c.set : "";
+    const num = /^[A-Za-z0-9-]{1,12}$/.test(String(c.num || "")) ? String(c.num) : "";
+    const cost = /^(\{[^}]{1,6}\})*$/.test(String(c.cost || "")) ? String(c.cost || "") : "";
+    const img = /^https:\/\/cards\.scryfall\.io\/[\w\/.-]+$/.test(String(c.img || "")) ? c.img : "";
+    rows.push([safe_(name), set, num ? "'" + num : "", letters_(c.ci).join(" "), cost ? "'" + cost : "", c.land ? "Land" : "", img]);
+  });
+  const ss = book_();
+  const prev = latestCubeTab_(ss);
+  const before = prev ? cubeRows_(prev.sheet).map(c => c.name) : [];
+  const name = "Cube " + version;
+  let t = ss.getSheetByName(name);
+  if (t) t.clear();
+  else t = ss.insertSheet(name, prev ? prev.sheet.getIndex() : ss.getNumSheets());
+  t.getRange(1, 1, 1, CUBE_COLS.length).setValues([CUBE_COLS]).setFontWeight("bold");
+  t.setFrozenRows(1);
+  t.getRange(2, 1, rows.length, CUBE_COLS.length).setValues(rows);
+  t.setColumnWidth(1, 260);
+  // Log what changed against the version that was newest before this save
+  const now = rows.map(r => String(r[0]).replace(/^'/, "")), had = {}, has = {};
+  before.forEach(n => had[n.toLowerCase()] = true); now.forEach(n => has[n.toLowerCase()] = true);
+  const added = now.filter(n => !had[n.toLowerCase()]), removed = before.filter(n => !has[n.toLowerCase()]);
+  ss.getSheetByName(LOG).appendRow([new Date(), "Cube " + version + " saved: " + rows.length + " cards (+" + added.length + " " + added.join(", ") + " / -" + removed.length + " " + removed.join(", ") + ")", "", ""]);
+  return json_(state_());
 }
 
 // ---- Deck photos -> text ------------------------------------------------------

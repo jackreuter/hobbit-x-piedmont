@@ -19,7 +19,7 @@ GitHub Pages (index.html, static)  ──fetch──►  Google Apps Script web 
   - `Best & Worst`: Tier (Best/Worst) | Card | ID | Added. Editable by hand; the page reads it on every load.
   - `Decks`: Key | Deck | Pilot | Wins | Losses | Updated | Date | Colors | Splash | Cards | Sideboard. One row per deck; a **draft is every deck sharing a Date**. Colors/Splash are letters ("U R"), Cards (main deck) and Sideboard are space-separated card ids.
   - `Log`: every change made from the page.
-  - `Cube YYYY-MM-DD`: one tab per cube version. Columns Name | Set | Number. **The page shows the newest-dated tab.** Name alone is enough; Set/Number pick a printing. Duplicate names are ignored (first row wins). New versions are made by duplicating the latest tab, renaming it with the date, and editing rows.
+  - `Cube YYYY-MM-DD`: one tab per cube version. Columns Name | Set | Number | Colors | Cost | Land | Image. **The page shows the newest-dated tab.** Name alone is enough for a card added by hand; Set/Number pick a printing. Versions saved by the cube form (`cube.html`) fill in every column from Scryfall, so pages don't need to look cards up. Duplicate names are ignored (first row wins).
 - There is also a private claude.ai artifact version of the page (uses the claude.ai `db` capability instead of the sheet). It is not the source of truth and does not read the sheet. GitHub + Sheet is canonical.
 
 ## API contract (Code.gs)
@@ -31,6 +31,7 @@ GitHub Pages (index.html, static)  ──fetch──►  Google Apps Script web 
 - Deck create/replace (deck form): `{ type: "deck", key, name, pilot, date: "YYYY-MM-DD", w, l, colors, splash, cards: [ids], sideboard: [ids] }`. Without `cards`, the saved colors/cards are kept.
 - Record only (main-page steppers): `{ type: "record", key, w, l }`
 - Delete: `{ type: "deleteDeck", key }`
+- Cube version (cube form): `{ type: "cube", version: "YYYY-MM-DD", cards: [{ name, set, num, ci, cost, land, img }] }` writes (or replaces) the `Cube YYYY-MM-DD` tab with the full list and logs what was added and removed.
 - OCR (deck form photos): `{ type: "ocr", image: base64 JPEG ≤ 2 MB }` → `{ text }`, via Google Drive OCR; no lock.
 
 Every POST returns the full GET state. The script takes about 3 s per request and uses a script lock (30 s wait). The page sends POSTs **one at a time** through a queue with one retry; firing them in parallel caused "couldn't save" errors before.
@@ -88,6 +89,7 @@ Draft I card lists and colors were copied into the sheet on 2026-10-29. Each dec
 - Site: edit `src/page.html`, run `python3 build.py`, commit `index.html`, push to `main`.
 - Apps Script: `apps-script/` is linked with clasp. `clasp push --force`, then `clasp create-deployment --deploymentId <live id>` (keeps the URL). Permissions are listed in `apps-script/appsscript.json`; adding one needs the owner to run an authorize function in the editor.
 - `draft.html` + `cards.json`: deck form (add / edit / delete). Draft (existing or new date), pilot, name, record, then Main Deck and Sideboard piles filled from photos (Drive OCR, fuzzy-matched to card names; basic lands skipped) or by name. × removes, ⇄ moves between piles. Colors are read-only, from the main deck's mana costs (front face): 4+ cards needing a color = main, 1–3 = splash; hybrid symbols go to a color the deck already plays; Phyrexian and {2/W} symbols don't count. `cards.json` (cube + catalog + costs from `data/mana-costs.json`) is written by `build.py`.
+- `cube.html`: cube update form. Version date (default today), Removals (photos / by name, matched against the current cube) and Additions (photos / by name, matched against Scryfall's full card-name list, fetched when the form opens; basics skipped; cards already in the cube skipped). Tap a card to take it out of a list. Save writes current − removals + additions as a new dated tab, filling missing details from Scryfall. New cards get the printing Scryfall returns for the name, which may not match the physical card's art. The deck form also picks up cube cards from the sheet, so it can match cards added this way.
 
 ## Design decisions and owner preferences
 

@@ -196,12 +196,22 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
   const other = p => p === "m" ? "s" : "m";
   let w = 0, l = 0, dirty = false;
 
-  // Cards we can match: the cube and older cards, plus any the main page has looked up on Scryfall
+  // Cards we can match: the cube and older cards (cards.json), cards added to the cube in the sheet since,
+  // and any the main page has looked up on Scryfall
   let cards = [], byId = new Map(), keys = [];
-  const ready = fetch("cards.json").then(r => r.json()).then(list => {
+  const stateReady = fetch(API).then(r => r.json());
+  const ready = Promise.all([fetch("cards.json").then(r => r.json()), stateReady.catch(() => null)]).then(([list, state]) => {
     let extra = [];
     try { extra = Object.values(JSON.parse(localStorage.getItem("card-cache") || "{}")).map(c => ({ ...c, ci: Array.isArray(c.ci) ? c.ci.join("") : (c.ci || "") })); } catch (e) {}
-    cards = [...list, ...extra.filter(c => c && c.id && !list.some(x => x.id === c.id))];
+    const rows = state && state.cube ? state.cube.cards : [];
+    const fromSheet = rows.filter(r => r.set && r.num && r.img).map(r => ({ id: (r.set + "-" + r.num).toLowerCase(), name: r.name, ci: (r.ci || []).join(""), img: r.img, cost: r.cost, land: r.land ? 1 : undefined }));
+    cards = [...list];
+    [...fromSheet, ...extra].forEach(c => { if (c && c.id && !cards.some(x => x.id === c.id)) cards.push(c); });
+    // "Not in current cube" follows the sheet's newest version
+    if (rows.length) {
+      const inCube = new Set(rows.map(r => norm(r.name)));
+      cards = cards.map(c => ({ ...c, cut: inCube.has(norm(c.name)) ? undefined : 1 }));
+    }
     cards.forEach(c => byId.set(c.id, c));
     const seen = new Set();
     cards.forEach(c => [c.name, c.name.split(" // ")[0]].forEach(n => {
@@ -453,7 +463,7 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
   // ---- Load ----
   let deck = null;
   renderRecord(); renderPile("m"); renderPile("s");
-  Promise.all([ready, fetch(API).then(r => r.json())]).then(([, state]) => {
+  Promise.all([ready, stateReady]).then(([, state]) => {
     const all = state && state.decks || {};
     drafts = [...new Set(Object.values(all).map(d => d.date).filter(Boolean))].sort();
     const pilots = [...new Set(Object.values(all).map(d => d.pilot).filter(Boolean))].sort();
