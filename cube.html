@@ -203,8 +203,10 @@ summary { cursor: pointer; font: 700 .95rem var(--label); color: var(--ink-soft)
       ci: d.color_identity || [], cost: d.mana_cost != null && !d.card_faces ? d.mana_cost : (face.mana_cost != null ? face.mana_cost : (d.mana_cost || "")),
       land: /Land/.test(front), img: (iu.normal || "").split("?")[0] };
   };
-  // Card details for a list of identifiers ({ name } or { set, collector_number }), 75 per request
+  // Card details for a list of identifiers ({ name } or { set, collector_number }), 75 per request.
+  // Scryfall only finds two-part cards (Brigid, Clachan's Heart // Brigid, Doun's Mind) by their front face name.
   async function collection(ids) {
+    ids = ids.map(x => x.name ? { name: x.name.split(" // ")[0] } : x);
     const out = [];
     for (let i = 0; i < ids.length; i += 75) {
       const r = await fetch(SCRYFALL + "/cards/collection", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ identifiers: ids.slice(i, i + 75) }) }).then(x => x.json()).catch(() => null);
