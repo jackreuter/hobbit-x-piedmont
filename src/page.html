@@ -845,7 +845,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   const groupOf = c => c.land ? "L" : c.ci.length === 0 ? "C" : c.ci.length > 1 ? "M" : c.ci[0];
   let tiers = { top: [...data.best], bottom: [...data.worst] };
   let canWrite = false, tierRef = null;
-  let cubeQuery = "", cubeColors = new Set(), tiersLoading = false;   // W/U/B/R/G (any mix), or just C or L
+  let cubeQuery = "", cubeColors = new Set(), tiersLoading = false;   // W/U/B/R/G (any mix) or C, each optionally with L
 
   function renderTier(id, list, emptyText, key) {
     const host = document.getElementById(id); host.replaceChildren();
@@ -890,21 +890,23 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
       frag.append(x.node); n += x.c.count || 1;
     });
     grid.replaceChildren(frag);
-    const CNAME = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colorless", L: "land" };
-    const picked = "WUBRGCL".split("").filter(k => cubeColors.has(k)).map(k => CNAME[k]).join("-");
-    const word = n === 1 ? "card" : "cards";
+    const CNAME = { W: "white", U: "blue", B: "black", R: "red", G: "green", C: "colorless" };
+    const colorWords = "WUBRGC".split("").filter(k => cubeColors.has(k)).map(k => CNAME[k]).join("-");
+    const word = cubeColors.has("L") ? (n === 1 ? "land" : "lands") : (n === 1 ? "card" : "cards");
     document.getElementById("cube-note").textContent = cubeQuery
       ? `${n} of ${CUBE.reduce((s, c) => s + (c.count || 1), 0)} cards`
-      : picked ? `${n} ${picked} ${word}` : `${n} ${word}` + (cubeVersion ? ` · version ${cubeVersion}` : "");
+      : cubeColors.size ? `${n} ${colorWords ? colorWords + " " : ""}${word}` : `${n} ${word}` + (cubeVersion ? ` · version ${cubeVersion}` : "");
     document.getElementById("cube-empty").hidden = n > 0;
     document.getElementById("cube-hint").hidden = !canWrite;
   }
-  // Picked colors match cards whose color identity is exactly those colors (G + R = only green-red cards)
+  // Picked colors match cards whose color identity is exactly those colors (G + R = only green-red cards):
+  // spells, or with Lands picked too, lands (Lands + G = lands that make only green; Lands + C = lands with no color)
   function matchesColors(c) {
     if (!cubeColors.size) return true;
-    const g = groupOf(c);
-    if (cubeColors.has("C") || cubeColors.has("L")) return cubeColors.has(g);
-    return !c.land && c.ci.length === cubeColors.size && c.ci.every(x => cubeColors.has(x));
+    if (cubeColors.has("C")) return cubeColors.has("L") ? !!c.land && !c.ci.length : groupOf(c) === "C";
+    const colors = [...cubeColors].filter(x => x !== "L");
+    if (!!c.land !== cubeColors.has("L")) return false;
+    return !colors.length || (c.ci.length === colors.length && c.ci.every(x => colors.includes(x)));
   }
   function renderCards() {
     renderTier("best", tiers.top, tiersLoading ? "Loading…" : "No cards here yet.", "top");
@@ -915,11 +917,12 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   document.getElementById("cube-search").addEventListener("input", e => { cubeQuery = norm(e.target.value); renderCube(); });
   document.getElementById("color-chips").addEventListener("click", e => {
     const b = e.target.closest(".cchip"); if (!b) return;
-    const k = b.dataset.color, solo = k === "C" || k === "L";
+    const k = b.dataset.color;
     if (cubeColors.has(k)) cubeColors.delete(k);
     else {
-      // Colorless and Lands stand alone; the five colors combine
-      if (solo || cubeColors.has("C") || cubeColors.has("L")) cubeColors.clear();
+      // The five colors combine with each other, Colorless replaces them, and either goes with Lands
+      if (k === "C") "WUBRG".split("").forEach(x => cubeColors.delete(x));
+      else if (k !== "L") cubeColors.delete("C");
       cubeColors.add(k);
     }
     document.querySelectorAll(".cchip").forEach(x => x.setAttribute("aria-pressed", String(cubeColors.has(x.dataset.color))));
