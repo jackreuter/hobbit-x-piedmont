@@ -34,10 +34,17 @@ button, a, input, summary { -webkit-tap-highlight-color: transparent; }
 button:focus:not(:focus-visible) { outline: none; }
 * { box-sizing: border-box; }
 :root { --map-ink: rgba(107, 93, 69, .24); }
-.mapbg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 .book { position: relative; z-index: 1; }
 body {
-  background: var(--bg); color: var(--ink);
+  /* Outside the book: the same green felt as the game table. */
+  background:
+    radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.07), transparent 65%),
+    radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.28)),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 4px),
+    #24492f;
+  background-attachment: fixed;
+  min-height: 100vh;
+  color: var(--ink);
   font-family: var(--body); font-size: 17px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -220,7 +227,10 @@ footer { text-align: center; font-family: var(--fell); font-style: italic; color
 /* Fantasy-book embellishments: framed page, illuminated initials, Rackham plates and vignettes */
 :root { --corner-img: url("data:image/png;base64,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"); }
 .book { position: relative; border: 1px solid var(--rule); outline: 3px double color-mix(in srgb, var(--ink-soft) 70%, transparent); outline-offset: 6px;
-  padding: clamp(28px, 5vw, 48px) clamp(14px, 5vw, 52px); background: color-mix(in srgb, var(--page) 45%, transparent); margin-block: 8px; }
+  padding: clamp(28px, 5vw, 48px) clamp(14px, 5vw, 52px); margin-block: 8px;
+  /* Solid parchment; the aged-paper texture (drawn by script) is laid over it as an image. */
+  background-color: color-mix(in srgb, var(--page) 45%, var(--bg)); background-repeat: repeat-y; background-size: 100% auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45); }
 .corner { position: absolute; width: clamp(38px, 8vw, 62px); aspect-ratio: 87 / 107; background: var(--corner-img) center / contain no-repeat; opacity: .9; pointer-events: none; }
 .corner.tl { top: -14px; left: -14px; }
 .corner.tr { top: -14px; right: -14px; transform: scaleX(-1); }
@@ -1077,8 +1087,9 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
 <script>
 // Aged map-paper texture, drawn behind the page
 (function () {
-  const cv = document.createElement("canvas"); cv.className = "mapbg"; cv.setAttribute("aria-hidden", "true");
-  document.body.prepend(cv);
+  // Drawn once into an offscreen canvas, then laid over the book as its background (repeating down the page).
+  const cv = document.createElement("canvas");
+  const book = document.querySelector(".book");
   const rng = seed => () => (seed = (seed * 16807) % 2147483647, (seed - 1) / 2147483646);
   let grain = null, grainKey = "";
   function grainTile(dark) {
@@ -1094,9 +1105,11 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
     c.putImageData(img, 0, 0); grain = t; grainKey = key; return t;
   }
   function draw() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = innerWidth, H = innerHeight;
+    if (!book) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2), W = book.clientWidth || 860, H = 1320; // a multiple of the 220px grain tile, so the texture repeats without a seam
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W, H);
+    const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = getComputedStyle(book).backgroundColor; g.fillRect(0, 0, W, H);
     const cs = getComputedStyle(document.documentElement);
     const dark = false;
     const stain = dark ? "0,0,0" : "120,78,30", hi = dark ? "255,236,200" : "255,250,236";
@@ -1104,16 +1117,20 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
     // mottled stains
     for (let i = 0; i < 22; i++) {
       const x = r() * W, y = r() * H, rad = M * (.12 + r() * .3), a = (dark ? .10 : .035) * (.4 + r());
-      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
-      gr.addColorStop(0, `rgba(${stain},${a})`); gr.addColorStop(1, `rgba(${stain},0)`);
-      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      for (const dy of [-H, 0, H]) { // wrapped top to bottom, so the tile repeats seamlessly
+        const gr = g.createRadialGradient(x, y + dy, 0, x, y + dy, rad);
+        gr.addColorStop(0, `rgba(${stain},${a})`); gr.addColorStop(1, `rgba(${stain},0)`);
+        g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      }
     }
     // a few lighter worn patches
     for (let i = 0; i < 6; i++) {
       const x = r() * W, y = r() * H, rad = M * (.08 + r() * .18);
-      const gr = g.createRadialGradient(x, y, 0, x, y, rad);
-      gr.addColorStop(0, `rgba(${hi},${dark ? .025 : .18})`); gr.addColorStop(1, `rgba(${hi},0)`);
-      g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      for (const dy of [-H, 0, H]) {
+        const gr = g.createRadialGradient(x, y + dy, 0, x, y + dy, rad);
+        gr.addColorStop(0, `rgba(${hi},${dark ? .025 : .18})`); gr.addColorStop(1, `rgba(${hi},0)`);
+        g.fillStyle = gr; g.fillRect(0, 0, W, H);
+      }
     }
     // foxing spots
     for (let i = 0; i < 40; i++) {
@@ -1128,21 +1145,9 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
       g.strokeStyle = `rgba(${r() > .5 ? stain : hi},${dark ? .08 : .09})`;
       g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * .5 + (r() - .5) * 4, y + Math.sin(a) * l * .5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
     }
-    // fold creases
-    const fold = (x1, y1, x2, y2, ox, oy) => {
-      g.lineWidth = 1.2; g.strokeStyle = `rgba(${stain},${dark ? .22 : .05})`;
-      g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
-      g.lineWidth = 1; g.strokeStyle = `rgba(${hi},${dark ? .04 : .35})`;
-      g.beginPath(); g.moveTo(x1 + ox, y1 + oy); g.lineTo(x2 + ox, y2 + oy); g.stroke();
-    };
-    fold(W / 2, 0, W / 2, H, 1.5, 0);
-    fold(0, H / 2, W, H / 2, 0, 1.5);
     // fine grain
     g.fillStyle = g.createPattern(grainTile(dark), "repeat"); g.fillRect(0, 0, W, H);
-    // darkened, burnt-looking edges
-    const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .35, W / 2, H / 2, Math.hypot(W, H) * .62);
-    v.addColorStop(0, `rgba(${stain},0)`); v.addColorStop(1, `rgba(${stain},${dark ? .55 : .14})`);
-    g.fillStyle = v; g.fillRect(0, 0, W, H);
+    book.style.backgroundImage = `url(${cv.toDataURL("image/jpeg", .85)})`;
   }
   let t; const redraw = () => { clearTimeout(t); t = setTimeout(draw, 150); };
   addEventListener("resize", redraw);
