@@ -43,14 +43,18 @@ button:focus:not(:focus-visible) { outline: none; }
 * { box-sizing: border-box; }
 :root { --map-ink: rgba(107, 93, 69, .24); }
 .book { position: relative; z-index: 1; }
-body {
+html {
   /* Outside the book: the same green felt as the game table. */
   background:
     radial-gradient(ellipse at 50% 45%, rgba(255,255,255,.07), transparent 65%),
     radial-gradient(ellipse at 50% 50%, transparent 55%, rgba(0,0,0,.28)),
     repeating-linear-gradient(45deg, rgba(0,0,0,.025) 0 2px, transparent 2px 4px),
-    #24492f;
+    linear-gradient(#24492f, #24492f),
+    #1b3623;
   background-attachment: fixed;
+}
+body {
+  background: transparent;
   min-height: 100vh;
   color: var(--ink);
   font-family: var(--body); font-size: 17px; line-height: 1.5;
@@ -85,6 +89,7 @@ td.player small { display: inline-flex; vertical-align: 2px; margin-left: 12px; 
 .xbtn { white-space: nowrap; font-family: var(--label); font-style: normal; font-size: 12px; letter-spacing: .05em; padding: 1px 9px; border-radius: 999px; border: 1px solid var(--rule); background: color-mix(in srgb, var(--page) 35%, transparent); color: var(--ink-soft); cursor: pointer; }
 .xbtn[aria-expanded]::after { content: " ▾"; }
 a.xbtn { text-decoration: none; display: inline-block; }
+.play-game { background: var(--red); border-color: var(--red); color: var(--page); }
 .deck-tools { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; }
 .add-deck { width: 32px; height: 32px; flex: none; display: grid; place-items: center; border-radius: 50%; border: 1px solid color-mix(in srgb, var(--ink) 40%, transparent); color: var(--ink); text-decoration: none; font: 700 22px/1 var(--label); background: color-mix(in srgb, var(--page) 35%, transparent); }
 .add-deck:focus-visible { outline: none; box-shadow: 0 0 0 2px color-mix(in srgb, var(--ink) 35%, transparent); }
@@ -279,7 +284,7 @@ h2::first-letter { font-size: 1.5em; line-height: 1; color: var(--red); padding:
   </header>
 
   <section id="decks">
-    <div class="section-head decks-head"><h2>Decks</h2><span class="deck-tools"><select class="draft-pick" id="draft-pick" aria-label="Draft" hidden></select><a class="xbtn play-game" href="https://hobbit-cube-game.jack-collins-reuter.workers.dev" title="Play two drafted decks against each other online">Play</a><a class="add-deck" id="add-deck" href="draft.html" aria-label="Add deck" title="Add deck">+</a></span><span class="note deck-status" id="deck-status" aria-live="polite"></span></div>
+    <div class="section-head decks-head"><h2>Decks</h2><span class="deck-tools"><select class="draft-pick" id="draft-pick" aria-label="Draft" hidden></select><a class="add-deck" id="add-deck" href="draft.html" aria-label="Add deck" title="Add deck">+</a><a class="xbtn play-game" href="https://hobbit-cube-game.jack-collins-reuter.workers.dev" title="Play two drafted decks against each other online">Play</a></span><span class="note deck-status" id="deck-status" aria-live="polite"></span></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Name</th><th class="pilot-col">Pilot</th><th class="num">Record</th></tr></thead>
